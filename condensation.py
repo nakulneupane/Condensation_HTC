@@ -13,7 +13,7 @@ from PIL import Image
 @st.cache_data
 def cool(ref1, ref2, mf1, mf2, out, in1, valin1, in2, valin2):
     """Calculate thermodynamic properties using REFPROP.
-       (This function is used when the user selects 'Calculate using CoolProp'.)"""
+       (Used when the user selects 'Calculate using CoolProp'.)"""
     if ref2 == '' or pd.isna(ref2):
         fluid = 'REFPROP::' + ref1
     else:
@@ -76,19 +76,15 @@ if mode == "Single Data Point":
 
     st.subheader("2. Select Method for Fluid Properties")
     prop_method = st.radio("Choose how to provide fluid properties:",
-                           ("Calculate using CoolProp", "Input manually"))
+                           ["Calculate using CoolProp", "Input manually"])
     
-    # Initialize a flag to indicate if CoolProp calculations succeeded
+    # Flag to track if CoolProp calculation succeeded.
     prop_success = False
     if prop_method == "Calculate using CoolProp":
-        # Ask for a temperature input (used for all property calculations)
-        T_input = st.number_input("Enter Temperature (K) for property calculation:", 
-                                  value=313.0, format="%.2f")
-        # Also ask for a quality value to calculate surface tension
-        quality_for_prop = st.number_input("Enter quality (x) for property calculation (0 for liquid, 1 for vapor):", 
+        T_input = st.number_input("Enter Temperature (K) for property calculation:", value=313.0, format="%.2f")
+        quality_for_prop = st.number_input("Enter quality (x) for property calculation (0 for liquid, 1 for vapor):",
                                            min_value=0.0, max_value=1.0, value=0.0, step=0.01)
         try:
-            # Attempt to calculate properties using CoolProp
             Psat = cool(fluid1, fluid2, mf1, mf2, 'P', 'T', T_input, 'Q', 0)
             rho_l = cool(fluid1, fluid2, mf1, mf2, 'D', 'T', T_input, 'Q', 0)
             rho_v = cool(fluid1, fluid2, mf1, mf2, 'D', 'T', T_input, 'Q', 1)
@@ -99,7 +95,6 @@ if mode == "Single Data Point":
             surface_tension = cool(fluid1, fluid2, mf1, mf2, 'I', 'T', T_input, 'Q', quality_for_prop)
             Cp_l = cool(fluid1, fluid2, mf1, mf2, 'C', 'T', T_input, 'Q', 0)
             Cp_v = cool(fluid1, fluid2, mf1, mf2, 'C', 'T', T_input, 'Q', 1)
-            # If no exception is raised, set flag to True
             prop_success = True
         except Exception as e:
             st.error("CoolProp failed to calculate properties. Please input properties manually.")
@@ -117,17 +112,16 @@ if mode == "Single Data Point":
         Cp_l = st.number_input("Liquid Specific Heat (Cp_l) [J/kgK]:", value=4180.0, format="%.2f")
         Cp_v = st.number_input("Vapor Specific Heat (Cp_v) [J/kgK]:", value=2000.0, format="%.2f")
         Psat = st.number_input("Saturation Pressure (Psat) [Pa]:", value=101325.0, format="%.2f")
-        # Use the manually input Tsat for features
-        T_input = Tsat
+        T_input = Tsat  # Use Tsat as temperature input if properties are provided manually
 
     st.subheader("3. Additional Inputs")
-    x_val = st.number_input("Enter quality (x) (0 for liquid, 1 for vapor):", 
-                            min_value=0.0, max_value=1.0, value=0.5, step=0.01)
+    x_val = st.number_input("Enter quality (x) (0 for liquid, 1 for vapor):", min_value=0.0, max_value=1.0, value=0.5, step=0.01)
     D = st.number_input("Enter diameter (m):", value=0.025, format="%.4f")
     G = st.number_input("Enter mass flux (G) in kg/m²s:", value=200.0, format="%.2f")
     
     if st.button("Calculate Heat Transfer Coefficient (h)"):
-        # Build feature DataFrame (order must match your training data)
+        # Build the feature DataFrame in the order: 
+        # G (kg/m2s), x, Tsat (K), rho_l, rho_v, mu_l, mu_v, k_v, k_l, surface_tension, Cp_v, Cp_l, Psat (Pa), D (m)
         feature_dict = {
             'G (kg/m2s)': [G],
             'x': [x_val],
@@ -145,10 +139,10 @@ if mode == "Single Data Point":
             'D (m)': [D]
         }
         input_data = pd.DataFrame(feature_dict)
-        # Log transformation (adding a small epsilon to avoid log(0))
+        # Apply a log transformation (with epsilon to avoid log(0))
         epsilon = 1e-10
         log_transformed_data = np.log(input_data + epsilon)
-        # Load the models from Google Drive
+        # Load models
         pca = load_pca_model()
         xgb_model = load_xgb_model()
         X_pca = pca.transform(log_transformed_data)
@@ -163,7 +157,8 @@ if mode == "Single Data Point":
 # ---------------------------
 elif mode == "Batch Excel Upload":
     st.header("Batch Processing from Excel File")
-    st.info("Ensure your file includes all required fluid properties as columns.")
+    st.info("Ensure your file includes all required fluid properties as columns in the following order: \n"
+            "Refrigerant 1, Refrigerant 2, Mass Fraction of Refrigerant 1, Saturation Temperature (K), Saturation Pressure (Pa), Quality (x), Diameter (m), Mass Flux (kg/m^2.s), Liquid Density, Vapor Density, Liquid Viscosity, Vapor Viscosity, Liquid Thermal Conductivity, Vapor Thermal Conductivity, Surface Tension, Liquid Specific Heat, Vapor Specific Heat")
     uploaded_file = st.file_uploader("Upload Excel or CSV file", type=["xlsx", "xls", "csv"])
     if uploaded_file is not None:
         try:
@@ -174,7 +169,7 @@ elif mode == "Batch Excel Upload":
             st.write("### Uploaded Data:")
             st.dataframe(df)
             if st.button("Process Batch"):
-                # Load pre-trained models from local files in batch mode
+                # Load models (assumed to be local in batch mode)
                 pca = joblib.load('pca_updated_model.pkl')
                 xgb_model = joblib.load('updated_xgboost_model.pkl')
                 predicted_htc_list = []
