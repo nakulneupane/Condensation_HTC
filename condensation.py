@@ -8,18 +8,18 @@ import requests
 from PIL import Image
 
 # ---------------------------
-# Utility Function: HEOS
+# Utility Function: REFPROP
 # ---------------------------
 @st.cache_data
 def cool(ref1, ref2, mf1, mf2, out, in1, valin1, in2, valin2):
-    """Calculate thermodynamic properties using HEOS (open source backend) instead of REFPROP."""
+    """Calculate thermodynamic properties using REFPROP (cached to avoid recomputation)."""
     if ref2 == '' or pd.isna(ref2):
-        fluid = 'HEOS::' + ref1
+        fluid = 'REFPROP::' + ref1
     else:
-        state = CP.AbstractState('HEOS', f'{ref1}&{ref2}')
+        state = CP.AbstractState('REFPROP', f'{ref1}&{ref2}')
         state.set_mass_fractions([mf1, mf2])
         mole_fractions = state.get_mole_fractions()
-        fluid = f'HEOS::{ref1}[{mole_fractions[0]:.4f}]&{ref2}[{mole_fractions[1]:.4f}]'
+        fluid = f'REFPROP::{ref1}[{mole_fractions[0]:.4f}]&{ref2}[{mole_fractions[1]:.4f}]'
     result = CP.PropsSI(out, in1, valin1, in2, valin2, fluid)
     return result
 
@@ -91,7 +91,7 @@ if mode == "Single Data Point":
     G = st.number_input("Enter mass flux (G) in kg/m²s:", value=200.0, format="%.2f")
     
     if st.button("Calculate Heat Transfer Coefficient (h)"):
-        # Calculate thermodynamic properties using HEOS
+        # Calculate thermodynamic properties using REFPROP
         rho_l = cool(fluid1, fluid2, mf1, mf2, 'D', 'T', T, 'Q', 0)
         rho_v = cool(fluid1, fluid2, mf1, mf2, 'D', 'T', T, 'Q', 1)
         mu_l = cool(fluid1, fluid2, mf1, mf2, 'V', 'T', T, 'Q', 0)
@@ -186,7 +186,7 @@ elif mode == "Batch Excel Upload":
                     D = row.iloc[6]      # Diameter
                     G = row.iloc[7]      # Mass Flux
                     
-                    # Calculate thermodynamic properties using HEOS
+                    # Calculate thermodynamic properties using REFPROP
                     rho_l = cool(fluid1, fluid2, mf1, mf2, 'D', 'T', T, 'Q', 0)
                     rho_v = cool(fluid1, fluid2, mf1, mf2, 'D', 'T', T, 'Q', 1)
                     mu_l = cool(fluid1, fluid2, mf1, mf2, 'V', 'T', T, 'Q', 0)
