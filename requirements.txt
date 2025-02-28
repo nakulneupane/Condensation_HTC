@@ -7,5 +7,4 @@ requests
 Pillow
 scikit-learn
 xgboost
-REFPROPFunctionLibrary
 
