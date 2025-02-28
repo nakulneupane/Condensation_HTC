@@ -194,7 +194,7 @@ if mode == "Single Data Point":
 elif mode == "Batch Excel Upload":
     st.header("Batch Processing from Excel File")
     st.info("Ensure your file includes all required fluid properties as columns in the following order:\n"
-            "Refrigerant 1, Refrigerant 2, Mass Fraction of Refrigerant 1, Saturation Temperature (K), Saturation Pressure (Pa), Quality (x), Diameter (m), Mass Flux (kg/m^2.s), Liquid Density, Vapor Density, Liquid Viscosity, Vapor Viscosity, Liquid Thermal Conductivity, Vapor Thermal Conductivity, Surface Tension, Liquid Specific Heat, Vapor Specific Heat")
+            "Mass Flux (kg/m^2.s), Quality (x), Saturation Temperature (K), Liquid Density, Vapor Density, Liquid Viscosity, Vapor Viscosity, Vapor Thermal Conductivity, Liquid Thermal Conductivity,  Surface Tension, Vapor Specific Heat, Liquid Specific Heat, Saturation Pressure (Pa),  Diameter (m) ")
     uploaded_file = st.file_uploader("Upload Excel or CSV file", type=["xlsx", "xls", "csv"])
     if uploaded_file is not None:
         try:
