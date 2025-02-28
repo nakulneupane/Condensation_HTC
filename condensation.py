@@ -38,6 +38,24 @@ except Exception as e:
     st.write(f"Error loading image: {e}")
 
 # ---------------------------
+# Model Loading Functions
+# ---------------------------
+@st.cache_resource
+def load_xgb_model():
+    # Construct a direct download link from Google Drive
+    xgb_url = "https://drive.google.com/uc?export=download&id=1VWVEgUC0HAKLuytfY_hxePfQ3Qk9BAT2"
+    response = requests.get(xgb_url)
+    response.raise_for_status()  # Raise an error for bad responses
+    return joblib.load(BytesIO(response.content))
+
+@st.cache_resource
+def load_pca_model():
+    pca_url = "https://drive.google.com/uc?export=download&id=1HHOaQgxUDbA6iPEAkQHh1gJvihz-MShn"
+    response = requests.get(pca_url)
+    response.raise_for_status()
+    return joblib.load(BytesIO(response.content))
+
+# ---------------------------
 # Mode Selection
 # ---------------------------
 mode = st.radio("Select Mode", ("Single Data Point", "Batch Excel Upload"))
@@ -107,9 +125,9 @@ if mode == "Single Data Point":
         epsilon = 1e-10
         log_transformed_data = np.log(input_data + epsilon)
         
-        # Load pre-trained models
-        pca = joblib.load('pca_updated_model.pkl')
-        xgb_model = joblib.load('updated_xgboost_model.pkl')
+        # Load models from Google Drive
+        pca = load_pca_model()
+        xgb_model = load_xgb_model()
         
         # Apply PCA transformation and predict
         X_pca = pca.transform(log_transformed_data)
@@ -142,7 +160,7 @@ elif mode == "Batch Excel Upload":
             st.dataframe(df)
             
             if st.button("Process Batch"):
-                # Load pre-trained models
+                # Load pre-trained models (using local files in this mode)
                 pca = joblib.load('pca_updated_model.pkl')
                 xgb_model = joblib.load('updated_xgboost_model.pkl')
                 
