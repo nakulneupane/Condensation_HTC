@@ -8,19 +8,20 @@ import requests
 from PIL import Image
 
 # ---------------------------
-# Utility Function: REFPROP-based Calculation
+# Utility Function: CoolProp Calculation using HEOS
 # ---------------------------
 @st.cache_data
 def cool(ref1, ref2, mf1, mf2, out, in1, valin1, in2, valin2):
-    """Calculate thermodynamic properties using REFPROP.
-       (Used when the user selects 'Calculate using CoolProp'.)"""
+    """Calculate thermodynamic properties using CoolProp's HEOS backend."""
     if ref2 == '' or pd.isna(ref2):
-        fluid = 'REFPROP::' + ref1
+        fluid = 'HEOS::' + ref1
     else:
-        state = CP.AbstractState('REFPROP', f'{ref1}&{ref2}')
+        # For mixtures, CoolProp expects a string like "HEOS::Fluid1&Fluid2"
+        # with mass fractions set separately.
+        state = CP.AbstractState('HEOS', f'{ref1}&{ref2}')
         state.set_mass_fractions([mf1, mf2])
-        mole_fractions = state.get_mole_fractions()
-        fluid = f'REFPROP::{ref1}[{mole_fractions[0]:.4f}]&{ref2}[{mole_fractions[1]:.4f}]'
+        # Although not used directly in the fluid string here, we assume HEOS handles mixtures.
+        fluid = f'HEOS::{ref1}&{ref2}'
     return CP.PropsSI(out, in1, valin1, in2, valin2, fluid)
 
 # ---------------------------
@@ -81,7 +82,7 @@ if mode == "Single Data Point":
     prop_method = st.radio("Choose how to provide fluid properties:", 
                            ["Calculate using CoolProp", "Input manually"], key="prop_method")
     
-    # Flag to indicate successful CoolProp calculation
+    # Flag to indicate if CoolProp calculations succeeded.
     prop_success = False
 
     if prop_method == "Calculate using CoolProp":
@@ -91,12 +92,11 @@ if mode == "Single Data Point":
         # Ask for quality (for property calculation)
         quality_prop = st.number_input("Enter quality (x) for property calculation (0 for liquid, 1 for vapor):", 
                                        min_value=0.0, max_value=1.0, value=0.50, step=0.01, key="quality_prop")
-        # Ask for Temperature or Pressure value based on selection
         if temp_or_press == "T":
             T_input = st.number_input("Enter Temperature (K):", value=313.0, format="%.2f", key="T_input_calc")
         else:
             P_input = st.number_input("Enter Pressure (Pa):", value=101325.0, format="%.2f", key="P_input_calc")
-        # Ask for Diameter and Mass Flux (these inputs are common to both branches, so assign unique keys here)
+        # Ask for Diameter and Mass Flux with unique keys
         D = st.number_input("Enter diameter (m):", value=0.0050, format="%.4f", key="D_calc")
         G = st.number_input("Enter mass flux (G) in kg/m²s:", value=200.00, format="%.2f", key="G_calc")
         
@@ -141,11 +141,10 @@ if mode == "Single Data Point":
         Cp_l = st.number_input("Liquid Specific Heat (Cp_l) [J/kgK]:", value=4180.0, format="%.2f", key="Cp_l_manual")
         Cp_v = st.number_input("Vapor Specific Heat (Cp_v) [J/kgK]:", value=2000.0, format="%.2f", key="Cp_v_manual")
         Psat = st.number_input("Saturation Pressure (Psat) [Pa]:", value=101325.0, format="%.2f", key="Psat_manual")
-        # In manual mode, also ask for Diameter and Mass Flux with unique keys
         D = st.number_input("Enter diameter (m):", value=0.0050, format="%.4f", key="D_manual")
         G = st.number_input("Enter mass flux (G) in kg/m²s:", value=200.00, format="%.2f", key="G_manual")
     
-    # Section 3: Additional Input for quality if not already captured
+    # Section 3: Quality input (if not already captured)
     if prop_method == "Input manually" or not prop_success:
         x_val = st.number_input("Enter quality (x) (0 for liquid, 1 for vapor):", 
                                 min_value=0.0, max_value=1.0, value=0.5, step=0.01, key="x_manual")
@@ -153,19 +152,14 @@ if mode == "Single Data Point":
         x_val = quality_prop
 
     if st.button("Calculate Heat Transfer Coefficient (h)"):
-        # Assemble the feature DataFrame in the order:
+        # Assemble feature DataFrame in the order:
         # G (kg/m2s), x, Tsat (K), rho_l, rho_v, mu_l, mu_v, k_v, k_l, surface_tension, Cp_v, Cp_l, Psat (Pa), D (m)
-        # Use the same T_input whether from CoolProp or manual input.
-        # Use D and G from whichever branch was taken.
         if prop_method == "Calculate using CoolProp" and prop_success:
-            # In the calculation branch, D and G were given with keys "D_calc" and "G_calc"
-            diameter = D  # already defined above
+            diameter = D  # from the calc branch
             mass_flux = G
         else:
-            # In the manual branch, use keys "D_manual" and "G_manual"
-            diameter = D
+            diameter = D  # from manual branch
             mass_flux = G
-
         feature_dict = {
             'G (kg/m2s)': [mass_flux],
             'x': [x_val],
