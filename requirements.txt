@@ -5,3 +5,6 @@ CoolProp
 joblib
 requests
 Pillow
+scikit-learn
+xgboost
+
