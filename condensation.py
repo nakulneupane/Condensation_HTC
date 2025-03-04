@@ -1,3 +1,4 @@
+
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -186,7 +187,8 @@ if mode == "Single Data Point":
         predicted_h = np.exp(predicted_log_h)
         st.write("### Fluid Properties Used")
         st.dataframe(input_data)
-        st.write(f"### The predicted heat transfer coefficient is: **{predicted_h[0]:.4f} W/m²K**")
+        st.write(f"### <span style='color:blue;'>The predicted heat transfer coefficient is: **{predicted_h[0]:.4f} W/m²K**</span>", unsafe_allow_html=True)
+
 
 # ---------------------------
 # Batch Excel Upload Mode
