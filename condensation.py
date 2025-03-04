@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -18,10 +17,8 @@ def cool(ref1, ref2, mf1, mf2, out, in1, valin1, in2, valin2):
         fluid = 'HEOS::' + ref1
     else:
         # For mixtures, CoolProp expects a string like "HEOS::Fluid1&Fluid2"
-        # with mass fractions set separately.
         state = CP.AbstractState('HEOS', f'{ref1}&{ref2}')
         state.set_mass_fractions([mf1, mf2])
-        # Although not used directly in the fluid string here, we assume HEOS handles mixtures.
         fluid = f'HEOS::{ref1}&{ref2}'
     return CP.PropsSI(out, in1, valin1, in2, valin2, fluid)
 
@@ -58,7 +55,6 @@ with st.expander("🔍 Show Model Validity Information"):
         'R1234YF/R32 (48.0/52.0%)', 'R-E170/R744 (79.0/21.0%)', 'R236EA'
     """)
 
-
 # ---------------------------
 # Model Loading Functions
 # ---------------------------
@@ -77,14 +73,29 @@ def load_pca_model():
     return joblib.load(BytesIO(response.content))
 
 # ---------------------------
-# Mode Selection
+# Creative Mode Selection
 # ---------------------------
-mode = st.radio("Select Mode", ("Single Data Point", "Batch Excel Upload"))
+if 'mode' not in st.session_state:
+    st.session_state.mode = None
+
+st.write("### Select Your Mode")
+col1, col2 = st.columns(2)
+with col1:
+    if st.button("Single Data Point 📝"):
+        st.session_state.mode = "Single Data Point"
+with col2:
+    if st.button("Multiple Data 📊"):
+        st.session_state.mode = "Multiple Data"
+
+mode = st.session_state.mode
+
+if mode is None:
+    st.info("Please select a mode above to continue.")
 
 # ---------------------------
 # Single Data Point Mode
 # ---------------------------
-if mode == "Single Data Point":
+elif mode == "Single Data Point":
     st.header("Single Data Point Prediction")
     
     # Section 1: Basic Fluid Details
@@ -175,12 +186,8 @@ if mode == "Single Data Point":
     if st.button("Calculate Heat Transfer Coefficient (h)"):
         # Assemble feature DataFrame in the order:
         # G (kg/m2s), x, Tsat (K), rho_l, rho_v, mu_l, mu_v, k_v, k_l, surface_tension, Cp_v, Cp_l, Psat (Pa), D (m)
-        if prop_method == "Calculate using CoolProp" and prop_success:
-            diameter = D  # from the calc branch
-            mass_flux = G
-        else:
-            diameter = D  # from manual branch
-            mass_flux = G
+        diameter = D
+        mass_flux = G
         feature_dict = {
             'G (kg/m2s)': [mass_flux],
             'x': [x_val],
@@ -209,14 +216,13 @@ if mode == "Single Data Point":
         st.dataframe(input_data)
         st.write(f"### <span style='color:blue;'>The predicted heat transfer coefficient is: **{predicted_h[0]:.4f} W/m²K**</span>", unsafe_allow_html=True)
 
-
 # ---------------------------
-# Batch Excel Upload Mode
+# Multiple Data Mode
 # ---------------------------
-elif mode == "Batch Excel Upload":
-    st.header("Batch Processing from Excel File")
+elif mode == "Multiple Data":
+    st.header("Multiple Data Processing")
     st.info("Ensure your file includes all required fluid properties as columns in the following order:\n"
-            "Mass Flux (kg/m^2.s), Quality (x), Saturation Temperature (K), Liquid Density, Vapor Density, Liquid Viscosity, Vapor Viscosity, Vapor Thermal Conductivity, Liquid Thermal Conductivity,  Surface Tension, Vapor Specific Heat, Liquid Specific Heat, Saturation Pressure (Pa),  Diameter (m) ")
+            "Mass Flux (kg/m^2.s), Quality (x), Saturation Temperature (K), Liquid Density, Vapor Density, Liquid Viscosity, Vapor Viscosity, Vapor Thermal Conductivity, Liquid Thermal Conductivity, Surface Tension, Vapor Specific Heat, Liquid Specific Heat, Saturation Pressure (Pa), Diameter (m)")
     uploaded_file = st.file_uploader("Upload Excel or CSV file", type=["xlsx", "xls", "csv"])
     if uploaded_file is not None:
         try:
@@ -226,7 +232,7 @@ elif mode == "Batch Excel Upload":
                 df = pd.read_excel(uploaded_file)
             st.write("### Uploaded Data:")
             st.dataframe(df)
-            if st.button("Process Batch"):
+            if st.button("Process Multiple Data"):
                 pca = joblib.load('pca_updated_model.pkl')
                 xgb_model = joblib.load('updated_xgboost_model.pkl')
                 predicted_htc_list = []
