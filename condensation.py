@@ -46,9 +46,16 @@ with st.expander("🔍 Show Model Validity Information"):
     
     - **Mass Flux (G):** 24 to 1100 kg/m²s  
     - **Quality (x):** 0.01 to 0.99  
-    - **Saturation Temperature (Tsat):** 242 to 356 K   
-    - **Saturation Pressure (Psat):** 90000 to 120000 Pa  
+    - **Saturation Temperature (Tsat):** 242 to 356 K    
     - **Inner tube diameter (d):** 0.49 to 20 mm  
+    - **Refrigerants:** 'R134A', 'R290', 'R22', 'R410A', 'R601', 'R1234ZE(E)', 
+        'R513A', 'R32', 'R744',  'R1234YF', 'R404A', 'R12',
+        'R1270', 'R450A', 'R245FA', 'R170', 'R407C',
+        'R290/R170 (67.0/33.0%)', 'R290/R170 (33.0/67.0%)',
+        'R455A', 'R245FA/R601 (45.0/55.0%)', 'R717', 'R152A', 'R600A',
+        'R32/R125 (60.0/40.0%)', 'R32/R1234ZE(E) (25.0/75.0%)', 'R123', 'R125', 'R-E170',
+        'R32/R1234ZE(E) (45.0/55.0%)', 'R-E170/R744 (61.0/39.0%)', 'R1234YF/R32 (77.0/23.0%)',
+        'R1234YF/R32 (48.0/52.0%)', 'R-E170/R744 (79.0/21.0%)', 'R236EA'
     """)
 
 
