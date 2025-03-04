@@ -100,7 +100,7 @@ elif mode == "Single Data Point":
     
     # Section 1: Basic Fluid Details
     st.subheader("1. Input Fluid Details")
-    fluid1 = st.text_input("Enter primary fluid name (e.g., Water, R134a, etc.):", "Water", key="fluid1")
+    fluid1 = st.text_input("Enter primary fluid name (e.g., R1234ZE(E), R134a, etc.):", "R134a", key="fluid1")
     fluid2 = st.text_input("Enter secondary fluid name (or leave blank if none):", "", key="fluid2")
     mf1 = st.number_input("Enter mass fraction of fluid 1 (0 to 1):", min_value=0.0, 
                             max_value=1.0, value=1.0, step=0.01, key="mf1")
