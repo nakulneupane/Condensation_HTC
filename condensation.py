@@ -44,20 +44,11 @@ with st.expander("🔍 Show Model Validity Information"):
     st.markdown("""
     The model was trained with the following ranges:
     
-    - **Mass Flux (G):** 150 to 250 kg/m²s  
-    - **Quality (x):** 0 to 1  
-    - **Saturation Temperature (Tsat):** 300 to 350 K  
-    - **Liquid Density (rho_l):** 950 to 1050 kg/m³  
-    - **Vapor Density (rho_v):** 5 to 20 kg/m³  
-    - **Liquid Viscosity (mu_l):** 0.0005 to 0.005 Pa.s  
-    - **Vapor Viscosity (mu_v):** 0.000005 to 0.00002 Pa.s  
-    - **Vapor Thermal Conductivity (k_v):** 0.01 to 0.05 W/mK  
-    - **Liquid Thermal Conductivity (k_l):** 0.5 to 0.7 W/mK  
-    - **Surface Tension:** 0.05 to 0.08 N/m  
-    - **Vapor Specific Heat (Cp_v):** 1500 to 2500 J/kgK  
-    - **Liquid Specific Heat (Cp_l):** 4000 to 4500 J/kgK  
+    - **Mass Flux (G):** 24 to 1100 kg/m²s  
+    - **Quality (x):** 0.01 to 0.99  
+    - **Saturation Temperature (Tsat):** 242 to 356 K   
     - **Saturation Pressure (Psat):** 90000 to 120000 Pa  
-    - **Diameter (D):** 0.003 to 0.007 m  
+    - **Inner tube diameter (d):** 0.49 to 20 mm  
     """)
 
 
