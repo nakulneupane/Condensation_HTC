@@ -97,9 +97,7 @@ if mode is None:
 # ---------------------------
 elif mode == "Single Data Point":
     st.header("Single Data Point Prediction")
-    
-    # (Single data point code remains unchanged)
-    # ... [omitted for brevity]
+    # [Single Data Point Code Omitted for Brevity]
 
 # ---------------------------
 # Multiple Data Mode
@@ -169,13 +167,13 @@ elif mode == "Multiple Data":
                     mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
                 )
                 st.info("The Mean Absolute Percentage Error of the model is 9.22 %")
-                # Save processed DataFrame to session state
+                # Save processed DataFrame to session state for later use
                 st.session_state["df_processed"] = df
                 
         except Exception as e:
             st.error(f"Error processing file: {e}")
     
-    # Graph Generation Section (accessible if df_processed exists)
+    # Graph Generation Section (accessible if processed DataFrame exists)
     if "df_processed" in st.session_state:
         st.write("### Generate Graph")
         processed_df = st.session_state["df_processed"]
@@ -188,6 +186,8 @@ elif mode == "Multiple Data":
             ax.set_ylabel(y_var)
             ax.set_title(f"{y_var} vs {x_var}")
             st.pyplot(fig)
+            
+            # Save the graph as PNG and provide a download button
             buf = BytesIO()
             fig.savefig(buf, format="png")
             buf.seek(0)
@@ -196,5 +196,4 @@ elif mode == "Multiple Data":
                 data=buf,
                 file_name="graph.png",
                 mime="image/png"
-
-
+            )
