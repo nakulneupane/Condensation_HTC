@@ -215,6 +215,7 @@ elif mode == "Single Data Point":
         st.write("### Fluid Properties Used")
         st.dataframe(input_data)
         st.write(f"### <span style='color:blue;'>The predicted heat transfer coefficient is: **{predicted_h[0]:.4f} W/m²K**</span>", unsafe_allow_html=True)
+        st.info("The Mean Absolute Percentage Error of the model is 9.22 %")
 
 # ---------------------------
 # Multiple Data Mode
