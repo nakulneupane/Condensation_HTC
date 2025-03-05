@@ -230,7 +230,8 @@ elif mode == "Multiple Data":
             if uploaded_file.name.endswith('.csv'):
                 df = pd.read_csv(uploaded_file)
             else:
-                df = pd.read_excel(uploaded_file)
+                df = pd.read_excel(uploaded_file, engine='openpyxl')
+
             st.write("### Uploaded Data:")
             st.dataframe(df)
             if st.button("Process Multiple Data"):
