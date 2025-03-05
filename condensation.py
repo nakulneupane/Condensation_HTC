@@ -309,7 +309,7 @@ elif mode == "Multiple Data":
             
             # Save the graph as PNG and provide a download button
             buf = BytesIO()
-            fig.savefig(buf, format="png")
+            fig.savefig(buf, format="png",  bbox_inches='tight', dpi=800)
             buf.seek(0)
             st.download_button(
                 label="Download Graph as PNG",
