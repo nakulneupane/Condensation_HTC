@@ -134,7 +134,7 @@ elif mode == "Multiple Data":
                 predicted_htc_list = []
                 for index, row in df.iterrows():
                     features = pd.DataFrame({
-                        'G (kg/m2s)': [row['G (kg/m2s)']],
+                        'G (kg/m²s)': [row['G (kg/m2s)']],
                         'x': [row['x']],
                         'Tsat (K)': [row['Tsat (K)']],
                         'rho_l': [row['rho_l']],
