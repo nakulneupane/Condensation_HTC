@@ -274,5 +274,6 @@ elif mode == "Multiple Data":
                     file_name='processed_results.xlsx',
                     mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
                 )
+                st.info("The Mean Absolute Percentage Error of the model is 9.22 %")
         except Exception as e:
             st.error(f"Error processing file: {e}")
