@@ -188,3 +188,13 @@ elif mode == "Multiple Data":
             ax.set_ylabel(y_var)
             ax.set_title(f"{y_var} vs {x_var}")
             st.pyplot(fig)
+            buf = BytesIO()
+            fig.savefig(buf, format="png")
+            buf.seek(0)
+            st.download_button(
+                label="Download Graph as PNG",
+                data=buf,
+                file_name="graph.png",
+                mime="image/png"
+
+
