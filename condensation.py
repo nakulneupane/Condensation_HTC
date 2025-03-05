@@ -117,7 +117,7 @@ elif mode == "Multiple Data":
     if uploaded_file is not None:
         try:
             col_names = [
-                'G (kg/m2s)', 'x', 'Tsat (K)', 'rho_l', 'rho_v', 
+                'G (kg/m²s)', 'x', 'Tsat (K)', 'rho_l', 'rho_v', 
                 'mu_l', 'mu_v', 'k_v', 'k_l', 'surface_tension', 
                 'Cp_v', 'Cp_l', 'Psat (Pa)', 'D (m)'
             ]
