@@ -102,6 +102,130 @@ elif mode == "Single Data Point":
 # ---------------------------
 # Multiple Data Mode
 # ---------------------------
+# ---------------------------
+elif mode == "Single Data Point":
+    st.header("Single Data Point Prediction")
+    
+    # Section 1: Basic Fluid Details
+    st.subheader("1. Input Fluid Details")
+    fluid1 = st.text_input("Enter primary fluid name (e.g., R1234ZE(E), R134a, etc.):", "R134a", key="fluid1")
+    fluid2 = st.text_input("Enter secondary fluid name (or leave blank if none):", "", key="fluid2")
+    mf1 = st.number_input("Enter mass fraction of fluid 1 (0 to 1):", min_value=0.0, max_value=1.0, value=1.0, step=0.01, key="mf1")
+    if fluid2:
+        mf2 = 1.0 - mf1
+    else:
+        mf2 = 0
+
+    # Section 2: Choose Method for Fluid Property Input
+    st.subheader("2. Select Method for Fluid Properties")
+    prop_method = st.radio("Choose how to provide fluid properties:",
+                           ["Calculate using CoolProp", "Input manually"], key="prop_method")
+    
+    # Flag to indicate if CoolProp calculations succeeded.
+    prop_success = False
+
+    if prop_method == "Calculate using CoolProp":
+        # Ask: Temperature or Pressure?
+        temp_or_press = st.radio("Would you like to enter Temperature (T) or Pressure (P)?",
+                                 ["T", "P"], key="temp_or_press")
+        # Ask for quality (for property calculation)
+        quality_prop = st.number_input("Enter quality (x) for property calculation (0 for liquid, 1 for vapor):",
+                                       min_value=0.0, max_value=1.0, value=0.50, step=0.01, key="quality_prop")
+        if temp_or_press == "T":
+            T_input = st.number_input("Enter Temperature (K):", value=313.0, format="%.2f", key="T_input_calc")
+        else:
+            P_input = st.number_input("Enter Pressure (Pa):", value=101325.0, format="%.2f", key="P_input_calc")
+        # Ask for Diameter and Mass Flux with unique keys
+        D = st.number_input("Enter diameter (m):", value=0.0050, format="%.4f", key="D_calc")
+        G = st.number_input("Enter mass flux (G) in kg/m²s:", value=200.00, format="%.2f", key="G_calc")
+        
+        try:
+            if temp_or_press == "T":
+                Psat = cool(fluid1, fluid2, mf1, mf2, 'P', 'T', T_input, 'Q', 0)
+                rho_l = cool(fluid1, fluid2, mf1, mf2, 'D', 'T', T_input, 'Q', 0)
+                rho_v = cool(fluid1, fluid2, mf1, mf2, 'D', 'T', T_input, 'Q', 1)
+                mu_l = cool(fluid1, fluid2, mf1, mf2, 'V', 'T', T_input, 'Q', 0)
+                mu_v = cool(fluid1, fluid2, mf1, mf2, 'V', 'T', T_input, 'Q', 1)
+                k_l = cool(fluid1, fluid2, mf1, mf2, 'L', 'T', T_input, 'Q', 0)
+                k_v = cool(fluid1, fluid2, mf1, mf2, 'L', 'T', T_input, 'Q', 1)
+                surface_tension = cool(fluid1, fluid2, mf1, mf2, 'I', 'T', T_input, 'Q', quality_prop)
+                Cp_l = cool(fluid1, fluid2, mf1, mf2, 'C', 'T', T_input, 'Q', 0)
+                Cp_v = cool(fluid1, fluid2, mf1, mf2, 'C', 'T', T_input, 'Q', 1)
+            else:
+                T_input = cool(fluid1, fluid2, mf1, mf2, 'T', 'P', P_input, 'Q', 0)
+                Psat = P_input
+                rho_l = cool(fluid1, fluid2, mf1, mf2, 'D', 'T', T_input, 'Q', 0)
+                rho_v = cool(fluid1, fluid2, mf1, mf2, 'D', 'T', T_input, 'Q', 1)
+                mu_l = cool(fluid1, fluid2, mf1, mf2, 'V', 'T', T_input, 'Q', 0)
+                mu_v = cool(fluid1, fluid2, mf1, mf2, 'V', 'T', T_input, 'Q', 1)
+                k_l = cool(fluid1, fluid2, mf1, mf2, 'L', 'T', T_input, 'Q', 0)
+                k_v = cool(fluid1, fluid2, mf1, mf2, 'L', 'T', T_input, 'Q', 1)
+                surface_tension = cool(fluid1, fluid2, mf1, mf2, 'I', 'T', T_input, 'Q', quality_prop)
+                Cp_l = cool(fluid1, fluid2, mf1, mf2, 'C', 'T', T_input, 'Q', 0)
+                Cp_v = cool(fluid1, fluid2, mf1, mf2, 'C', 'T', T_input, 'Q', 1)
+            prop_success = True
+        except Exception as e:
+            st.error("CoolProp failed to calculate properties. Please input properties manually.")
+    
+    if prop_method == "Input manually" or not prop_success:
+        st.info("Please manually input the fluid properties:")
+        T_input = st.number_input("Enter Saturation Temperature (Tsat) [K]:", value=313.0, format="%.2f", key="T_input_manual")
+        rho_l = st.number_input("Liquid Density (rho_l) [kg/m³]:", value=1000.0, format="%.2f", key="rho_l_manual")
+        rho_v = st.number_input("Vapor Density (rho_v) [kg/m³]:", value=10.0, format="%.2f", key="rho_v_manual")
+        mu_l = st.number_input("Liquid Viscosity (mu_l) [Pa.s]:", value=0.001, format="%.4f", key="mu_l_manual")
+        mu_v = st.number_input("Vapor Viscosity (mu_v) [Pa.s]:", value=0.00001, format="%.6f", key="mu_v_manual")
+        k_l = st.number_input("Liquid Thermal Conductivity (k_l) [W/mK]:", value=0.6, format="%.2f", key="k_l_manual")
+        k_v = st.number_input("Vapor Thermal Conductivity (k_v) [W/mK]:", value=0.02, format="%.2f", key="k_v_manual")
+        surface_tension = st.number_input("Surface Tension (N/m):", value=0.072, format="%.3f", key="surf_manual")
+        Cp_l = st.number_input("Liquid Specific Heat (Cp_l) [J/kgK]:", value=4180.0, format="%.2f", key="Cp_l_manual")
+        Cp_v = st.number_input("Vapor Specific Heat (Cp_v) [J/kgK]:", value=2000.0, format="%.2f", key="Cp_v_manual")
+        Psat = st.number_input("Saturation Pressure (Psat) [Pa]:", value=101325.0, format="%.2f", key="Psat_manual")
+        D = st.number_input("Enter diameter (m):", value=0.0050, format="%.4f", key="D_manual")
+        G = st.number_input("Enter mass flux (G) in kg/m²s:", value=200.00, format="%.2f", key="G_manual")
+    
+    # Section 3: Quality input (if not already captured)
+    if prop_method == "Input manually" or not prop_success:
+        x_val = st.number_input("Enter quality (x) (0 for liquid, 1 for vapor):", min_value=0.0, max_value=1.0, value=0.5, step=0.01, key="x_manual")
+    else:
+        x_val = quality_prop
+
+    if st.button("Calculate Heat Transfer Coefficient (h)"):
+        # Assemble feature DataFrame in the order:
+        # G (kg/m2s), x, Tsat (K), rho_l, rho_v, mu_l, mu_v, k_v, k_l, surface_tension, Cp_v, Cp_l, Psat (Pa), D (m)
+        diameter = D
+        mass_flux = G
+        feature_dict = {
+            'G (kg/m2s)': [mass_flux],
+            'x': [x_val],
+            'Tsat (K)': [T_input],
+            'rho_l': [rho_l],
+            'rho_v': [rho_v],
+            'mu_l': [mu_l],
+            'mu_v': [mu_v],
+            'k_v': [k_v],
+            'k_l': [k_l],
+            'surface_tension': [surface_tension],
+            'Cp_v': [Cp_v],
+            'Cp_l': [Cp_l],
+            'Psat (Pa)': [Psat],
+            'D (m)': [diameter]
+        }
+        input_data = pd.DataFrame(feature_dict)
+        epsilon = 1e-10
+        log_transformed_data = np.log(input_data + epsilon)
+        pca = load_pca_model()
+        xgb_model = load_xgb_model()
+        X_pca = pca.transform(log_transformed_data)
+        predicted_log_h = xgb_model.predict(X_pca)
+        predicted_h = np.exp(predicted_log_h)
+        st.write("### Fluid Properties Used")
+        st.dataframe(input_data)
+        st.write(f"### <span style='color:blue;'>The predicted heat transfer coefficient is: **{predicted_h[0]:.4f} W/m²K**</span>", unsafe_allow_html=True)
+        st.info("The Mean Absolute Percentage Error of the model is 9.22 %")
+
+# ---------------------------
+# Multiple Data Mode
+# ---------------------------
 elif mode == "Multiple Data":
     st.header("Multiple Data Processing")
     st.info("Ensure your file includes all required fluid properties in the following order:\n"
