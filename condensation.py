@@ -222,8 +222,8 @@ elif mode == "Single Data Point":
 elif mode == "Multiple Data":
     st.header("Multiple Data Processing")
     st.info("Ensure your file includes all required fluid properties as columns in the following order:\n"
-            "Mass Flux (kg/m^2.s), Quality (x), Saturation Temperature (K), Liquid Density, Vapor Density, Liquid Viscosity, Vapor Viscosity, Vapor Thermal Conductivity, Liquid Thermal Conductivity, Surface Tension, Vapor Specific Heat, Liquid Specific Heat, Saturation Pressure (Pa), Diameter (m)")
-    uploaded_file = st.file_uploader("Upload Excel or CSV file", type=["xlsx", "xls", "csv"])
+            "Mass Flux (kg/m^2.s), Quality (x), Saturation Temperature (K), Density of liquid phase (kg/m^3), Density of vapor phase (kg/m^3), Dynamic viscosity of liquid phase (Ns/m^2), Dynamic viscosity of vapor phase (Ns/m^2), Conductivity of vapor phase (W/m.K), Thermal Conductivity of liquid phase (W/m.K), Surface Tension (N/m), Mass-specific constant pressure-specific heat of vapor phase (J/kg.K), Mass-specific constant pressure-specific heat of liquid phase (J/kg.K), Saturation pressure (Pa), Diameter (m)")
+    uploaded_file = st.file_uploader("Upload Excel or CSV file", type=["xlsx", "xls", "csv"]v
     if uploaded_file is not None:
         try:
             if uploaded_file.name.endswith('.csv'):
