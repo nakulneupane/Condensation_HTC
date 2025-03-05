@@ -117,7 +117,7 @@ elif mode == "Multiple Data":
     if uploaded_file is not None:
         try:
             col_names = [
-                'G (kg/m²s)', 'x', 'Tsat (K)', 'rho_l', 'rho_v', 
+                'G (kg/m2s)', 'x', 'Tsat (K)', 'rho_l', 'rho_v', 
                 'mu_l', 'mu_v', 'k_v', 'k_l', 'surface_tension', 
                 'Cp_v', 'Cp_l', 'Psat (Pa)', 'D (m)'
             ]
@@ -134,7 +134,7 @@ elif mode == "Multiple Data":
                 predicted_htc_list = []
                 for index, row in df.iterrows():
                     features = pd.DataFrame({
-                        'G (kg/m²s)': [row['G (kg/m2s)']],
+                        'G (kg/m2s)': [row['G (kg/m2s)']],
                         'x': [row['x']],
                         'Tsat (K)': [row['Tsat (K)']],
                         'rho_l': [row['rho_l']],
