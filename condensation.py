@@ -265,7 +265,8 @@ elif mode == "Multiple Data":
                 st.write("### Processed Data:")
                 st.dataframe(df)
                 output = BytesIO()
-                with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+                # Using openpyxl as the engine for writing Excel files
+                with pd.ExcelWriter(output, engine='openpyxl') as writer:
                     df.to_excel(writer, index=False, sheet_name='Results')
                 processed_data = output.getvalue()
                 st.download_button(
