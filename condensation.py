@@ -6,6 +6,7 @@ import joblib
 from io import BytesIO
 import requests
 from PIL import Image
+import matplotlib.pyplot as plt
 
 # ---------------------------
 # Utility Function: CoolProp Calculation using HEOS
@@ -110,16 +111,19 @@ elif mode == "Single Data Point":
 
     # Section 2: Choose Method for Fluid Property Input
     st.subheader("2. Select Method for Fluid Properties")
-    prop_method = st.radio("Choose how to provide fluid properties:", ["Calculate using CoolProp", "Input manually"], key="prop_method")
+    prop_method = st.radio("Choose how to provide fluid properties:",
+                           ["Calculate using CoolProp", "Input manually"], key="prop_method")
     
     # Flag to indicate if CoolProp calculations succeeded.
     prop_success = False
 
     if prop_method == "Calculate using CoolProp":
         # Ask: Temperature or Pressure?
-        temp_or_press = st.radio("Would you like to enter Temperature (T) or Pressure (P)?", ["T", "P"], key="temp_or_press")
+        temp_or_press = st.radio("Would you like to enter Temperature (T) or Pressure (P)?",
+                                 ["T", "P"], key="temp_or_press")
         # Ask for quality (for property calculation)
-        quality_prop = st.number_input("Enter quality (x) for property calculation (0 for liquid, 1 for vapor):", min_value=0.0, max_value=1.0, value=0.50, step=0.01, key="quality_prop")
+        quality_prop = st.number_input("Enter quality (x) for property calculation (0 for liquid, 1 for vapor):",
+                                       min_value=0.0, max_value=1.0, value=0.50, step=0.01, key="quality_prop")
         if temp_or_press == "T":
             T_input = st.number_input("Enter Temperature (K):", value=313.0, format="%.2f", key="T_input_calc")
         else:
@@ -217,8 +221,8 @@ elif mode == "Single Data Point":
 # ---------------------------
 elif mode == "Multiple Data":
     st.header("Multiple Data Processing")
-    st.info("Ensure your file includes all required fluid properties as columns strictly in the following order:\n"
-            "Mass Flux (kg/m^2.s), Quality (x), Saturation Temperature (K), Density of liquid phase (kg/m^3), Density of vapor phase (kg/m^3), Dynamic viscosity of liquid phase (Ns/m^2), Dynamic viscosity of vapor phase (Ns/m^2), Thermal conductivity of vapor phase (W/m.K), Thermal conductivity of liquid phase (W/m.K), Surface Tension (N/m), Mass-specific constant pressure-specific heat of vapor phase (J/kg.K), Mass-specific constant pressure-specific heat of liquid phase (J/kg.K), Saturation pressure (Pa), and Diameter (m). The first row is for the columns' heading.")
+    st.info("Ensure your file includes all required fluid properties as columns in the following order:\n"
+            "Mass Flux (kg/m^2.s), Quality (x), Saturation Temperature (K), Density of liquid phase (kg/m^3), Density of vapor phase (kg/m^3), Dynamic viscosity of liquid phase (Ns/m^2), Dynamic viscosity of vapor phase (Ns/m^2), Thermal conductivity of vapor phase (W/m.K), Thermal conductivity of liquid phase (W/m.K), Surface Tension (N/m), Mass-specific constant pressure-specific heat of vapor phase (J/kg.K), Mass-specific constant pressure-specific heat of liquid phase (J/kg.K), Saturation pressure (Pa), Diameter (m)")
     uploaded_file = st.file_uploader("Upload Excel or CSV file", type=["xlsx", "xls", "csv"])
     if uploaded_file is not None:
         try:
@@ -276,5 +280,19 @@ elif mode == "Multiple Data":
                     mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
                 )
                 st.info("The Mean Absolute Percentage Error of the model is 9.22 %")
+                
+                # ---------------------------
+                # Generate Graph Section
+                # ---------------------------
+                st.write("### Generate Graph")
+                x_var = st.selectbox("Select variable for X-axis", options=df.columns, key="x_axis")
+                y_var = st.selectbox("Select variable for Y-axis", options=df.columns, key="y_axis")
+                if st.button("Generate Graph"):
+                    fig, ax = plt.subplots()
+                    ax.scatter(df[x_var], df[y_var])
+                    ax.set_xlabel(x_var)
+                    ax.set_ylabel(y_var)
+                    ax.set_title(f"{y_var} vs {x_var}")
+                    st.pyplot(fig)
         except Exception as e:
             st.error(f"Error processing file: {e}")
