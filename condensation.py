@@ -25,7 +25,7 @@ def cool(ref1, ref2, mf1, mf2, out, in1, valin1, in2, valin2):
 # ---------------------------
 # App Title and Overview Image
 # ---------------------------
-st.title("🌡️ Heat Transfer Coefficient Predictor")
+st.title("Condensation Heat Transfer Coefficient Predictor")
 st.subheader("Model: **XGBoost with Optuna & PCA**")
 
 google_drive_url = "https://drive.google.com/uc?export=download&id=1itd1HnJBWUEXGUq0B8sFJhmXjWEjtQ1t"
