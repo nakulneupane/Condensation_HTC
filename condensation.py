@@ -97,14 +97,6 @@ if mode is None:
 # ---------------------------
 elif mode == "Single Data Point":
     st.header("Single Data Point Prediction")
-    # [Single Data Point Code Omitted for Brevity]
-
-# ---------------------------
-# Multiple Data Mode
-# ---------------------------
-# ---------------------------
-elif mode == "Single Data Point":
-    st.header("Single Data Point Prediction")
     
     # Section 1: Basic Fluid Details
     st.subheader("1. Input Fluid Details")
@@ -226,6 +218,10 @@ elif mode == "Single Data Point":
 # ---------------------------
 # Multiple Data Mode
 # ---------------------------
+# ---------------------------
+
+
+
 elif mode == "Multiple Data":
     st.header("Multiple Data Processing")
     st.info("Ensure your file includes all required fluid properties in the following order:\n"
