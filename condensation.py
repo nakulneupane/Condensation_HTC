@@ -235,8 +235,8 @@ elif mode == "Multiple Data":
             st.write("### Uploaded Data:")
             st.dataframe(df)
             if st.button("Process Multiple Data"):
-                pca = joblib.load('pca_updated_model.pkl')
-                xgb_model = joblib.load('updated_xgboost_model.pkl')
+                pca = load_pca_model()
+                xgb_model = load_xgb_model()
                 predicted_htc_list = []
                 for index, row in df.iterrows():
                     features = pd.DataFrame({
