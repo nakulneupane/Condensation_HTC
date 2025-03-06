@@ -11,36 +11,47 @@ import matplotlib.pyplot as plt
 import streamlit as st
 
 # Add custom CSS for dark mode
-st.markdown("""
-    <style>
-    body {
-        background-color: #2e2e2e;
-        color: #ffffff;
-    }
-    .css-1d391kg {
-        color: white !important;
-    }
-    .css-1v0mbjj {
-        background-color: #3e3e3e !important;
-    }
-    .css-1gh4g1h {
-        background-color: #333333 !important;
-    }
-    .css-1cpxqw5 {
-        color: white !important;
-    }
-    .stButton>button {
-        background-color: #00aaff;
-        color: white;
-    }
-    .stRadio>label {
-        color: white;
-    }
-    .stSelectbox>label {
-        color: white;
-    }
-    </style>
-""", unsafe_allow_html=True)
+import streamlit as st
+
+# Add option to toggle between dark and light themes
+theme = st.selectbox("Select Theme", options=["Light", "Dark"])
+
+if theme == "Dark":
+    st.markdown("""
+        <style>
+        body {
+            background-color: #2e2e2e;
+            color: white;
+        }
+        .stButton>button {
+            background-color: #00aaff;
+            color: white;
+        }
+        .stRadio>label, .stSelectbox>label {
+            color: white;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+else:
+    st.markdown("""
+        <style>
+        body {
+            background-color: white;
+            color: black;
+        }
+        .stButton>button {
+            background-color: #0078d4;
+            color: white;
+        }
+        .stRadio>label, .stSelectbox>label {
+            color: black;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+# Continue with your Streamlit code...
+st.title("My Dark Mode App")
+
 
 # ---------------------------
 # Utility Function: CoolProp Calculation using HEOS
