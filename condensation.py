@@ -14,30 +14,6 @@ import streamlit as st
 import streamlit as st
 
 # Add option to toggle between dark and light themes
-theme = st.selectbox("Select Theme", options=["Light", "Dark"])
-
-if theme == "Dark":
-    primaryColor="#FF4B4B"
-    backgroundColor="#FFFFFF"
-    secondaryBackgroundColor="#F0F2F6"
-    textColor="#31333F"
-    font="sans serif"
-else:
-    st.markdown("""
-        <style>
-        body {
-            background-color: white;
-            color: black;
-        }
-        .stButton>button {
-            background-color: #0078d4;
-            color: white;
-        }
-        .stRadio>label, .stSelectbox>label {
-            color: black;
-        }
-        </style>
-    """, unsafe_allow_html=True)
 
 
 # ---------------------------
