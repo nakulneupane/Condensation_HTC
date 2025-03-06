@@ -8,6 +8,40 @@ import requests
 from PIL import Image
 import matplotlib.pyplot as plt
 
+import streamlit as st
+
+# Add custom CSS for dark mode
+st.markdown("""
+    <style>
+    body {
+        background-color: #2e2e2e;
+        color: #ffffff;
+    }
+    .css-1d391kg {
+        color: white !important;
+    }
+    .css-1v0mbjj {
+        background-color: #3e3e3e !important;
+    }
+    .css-1gh4g1h {
+        background-color: #333333 !important;
+    }
+    .css-1cpxqw5 {
+        color: white !important;
+    }
+    .stButton>button {
+        background-color: #00aaff;
+        color: white;
+    }
+    .stRadio>label {
+        color: white;
+    }
+    .stSelectbox>label {
+        color: white;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
 # ---------------------------
 # Utility Function: CoolProp Calculation using HEOS
 # ---------------------------
