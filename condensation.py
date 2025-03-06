@@ -20,7 +20,7 @@ dark = """
             color: white;
         }
         .stButton>button {
-            background-color: purple;
+            background-color: #90D5FF;
             color: white;
         }
         .stButton>button:hover {
@@ -36,7 +36,7 @@ light = """
             color: black;
         }
         .stButton>button {
-            background-color: purple;
+            background-color: #90D5FF;
             color: white;
         }
         .stButton>button:hover {
