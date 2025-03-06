@@ -8,37 +8,45 @@ import requests
 from PIL import Image
 import matplotlib.pyplot as plt
 
-st.set_page_config(page_title="Dynamic Theme Example", page_icon="🎨", layout="wide", initial_sidebar_state="expanded")
+dark = '''
+<style>
+    .stApp {
+    background-color: black;
+    }
+</style>
+'''
 
-# Initialize theme in session state if not already set
-if 'theme' not in st.session_state:
-    st.session_state.theme = 'Light'  # Default theme
+light = '''
+<style>
+    .stApp {
+    background-color: white;
+    }
+</style>
 
-# Create a toggle for theme selection (Light or Dark)
-theme = st.radio("Select Theme", ("Light", "Dark"), index=0 if st.session_state.theme == 'Light' else 1)
+st.markdown(light, unsafe_allow_html=True)
 
-# Save the selected theme to session state
-st.session_state.theme = theme
+# Create a toggle button
+toggle = st.button("Toggle theme")
 
-# Apply the selected theme dynamically
-if theme == "Dark":
-    st.markdown("""
-        <style>
-        body {
-            background-color: #121212;
-            color: white;
-        }
-        </style>
-        """, unsafe_allow_html=True)
+# Use a global variable to store the current theme
+if "theme" not in st.session_state:
+    st.session_state.theme = "light"
+
+# Change the theme based on the button state
+if toggle:
+    if st.session_state.theme == "light":
+        st.session_state.theme = "dark"
+    else:
+        st.session_state.theme = "light"
+
+# Apply the theme to the app
+if st.session_state.theme == "dark":
+    st.markdown(dark, unsafe_allow_html=True)
 else:
-    st.markdown("""
-        <style>
-        body {
-            background-color: white;
-            color: black;
-        }
-        </style>
-        """, unsafe_allow_html=True)
+    st.markdown(light, unsafe_allow_html=True)
+
+# Display some text
+st.write("This is a streamlit app with a toggle button for themes.")
 
 
 # ---------------------------
