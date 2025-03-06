@@ -15,7 +15,7 @@ dark = """
     <style>
         .stApp {
             background-color: black;
-            color: white;
+            color: purple;
         }
     </style>
 """
