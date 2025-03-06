@@ -49,9 +49,6 @@ else:
         </style>
     """, unsafe_allow_html=True)
 
-# Continue with your Streamlit code...
-st.title("My Dark Mode App")
-
 
 # ---------------------------
 # Utility Function: CoolProp Calculation using HEOS
