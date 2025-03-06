@@ -8,28 +8,33 @@ import requests
 from PIL import Image
 import matplotlib.pyplot as plt
 
-dark = 
-<style>
-    .stApp {
-    background-color: black;
-    }
-</style>
+import streamlit as st
 
-light = 
-<style>
-    .stApp {
-    background-color: white;
-    }
-</style>
+# Define the CSS for dark and light themes
+dark = """
+    <style>
+        .stApp {
+            background-color: black;
+            color: white;
+        }
+    </style>
+"""
 
-st.markdown(light, unsafe_allow_html=True)
+light = """
+    <style>
+        .stApp {
+            background-color: white;
+            color: black;
+        }
+    </style>
+"""
+
+# Display the initial theme based on the session state
+if "theme" not in st.session_state:
+    st.session_state.theme = "light"  # Default theme is light
 
 # Create a toggle button
 toggle = st.button("Toggle theme")
-
-# Use a global variable to store the current theme
-if "theme" not in st.session_state:
-    st.session_state.theme = "light"
 
 # Change the theme based on the button state
 if toggle:
@@ -45,7 +50,8 @@ else:
     st.markdown(light, unsafe_allow_html=True)
 
 # Display some text
-st.write("This is a streamlit app with a toggle button for themes.")
+st.write("This is a Streamlit app with a toggle button for themes.")
+
 
 
 # ---------------------------
