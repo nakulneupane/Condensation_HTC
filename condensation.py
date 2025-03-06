@@ -65,8 +65,6 @@ if st.session_state.theme == "dark":
 else:
     st.markdown(light, unsafe_allow_html=True)
 
-# Display some text
-st.write("This is a Streamlit app with a toggle button for themes.")
 
 
 
