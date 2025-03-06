@@ -14,7 +14,6 @@ dark =
     background-color: black;
     }
 </style>
-'''
 
 light = 
 <style>
