@@ -10,12 +10,21 @@ import matplotlib.pyplot as plt
 
 import streamlit as st
 
+import streamlit as st
+
 # Define the CSS for dark and light themes
 dark = """
     <style>
         .stApp {
             background-color: black;
             color: white;
+        }
+        .stButton>button {
+            background-color: purple;
+            color: white;
+        }
+        .stButton>button:hover {
+            background-color: #6a0dad;
         }
     </style>
 """
@@ -25,6 +34,13 @@ light = """
         .stApp {
             background-color: white;
             color: black;
+        }
+        .stButton>button {
+            background-color: purple;
+            color: white;
+        }
+        .stButton>button:hover {
+            background-color: #6a0dad;
         }
     </style>
 """
@@ -48,6 +64,10 @@ if st.session_state.theme == "dark":
     st.markdown(dark, unsafe_allow_html=True)
 else:
     st.markdown(light, unsafe_allow_html=True)
+
+# Display some text
+st.write("This is a Streamlit app with a toggle button for themes.")
+
 
 
 
