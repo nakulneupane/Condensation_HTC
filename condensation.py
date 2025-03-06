@@ -17,21 +17,11 @@ import streamlit as st
 theme = st.selectbox("Select Theme", options=["Light", "Dark"])
 
 if theme == "Dark":
-    st.markdown("""
-        <style>
-        body {
-            background-color: #2e2e2e;
-            color: white;
-        }
-        .stButton>button {
-            background-color: #00aaff;
-            color: white;
-        }
-        .stRadio>label, .stSelectbox>label {
-            color: white;
-        }
-        </style>
-    """, unsafe_allow_html=True)
+    primaryColor="#FF4B4B"
+    backgroundColor="#FFFFFF"
+    secondaryBackgroundColor="#F0F2F6"
+    textColor="#31333F"
+    font="sans serif"
 else:
     st.markdown("""
         <style>
