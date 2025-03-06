@@ -8,7 +8,7 @@ import requests
 from PIL import Image
 import matplotlib.pyplot as plt
 
-dark = '''
+dark = 
 <style>
     .stApp {
     background-color: black;
@@ -16,7 +16,7 @@ dark = '''
 </style>
 '''
 
-light = '''
+light = 
 <style>
     .stApp {
     background-color: white;
