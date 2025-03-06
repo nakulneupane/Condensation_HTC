@@ -8,12 +8,20 @@ import requests
 from PIL import Image
 import matplotlib.pyplot as plt
 
+st.set_page_config(page_title="Dynamic Theme Example", page_icon="🎨", layout="wide", initial_sidebar_state="expanded")
 
-theme = st.radio("Select Theme", ("Light", "Dark"))
+# Initialize theme in session state if not already set
+if 'theme' not in st.session_state:
+    st.session_state.theme = 'Light'  # Default theme
+
+# Create a toggle for theme selection (Light or Dark)
+theme = st.radio("Select Theme", ("Light", "Dark"), index=0 if st.session_state.theme == 'Light' else 1)
+
+# Save the selected theme to session state
+st.session_state.theme = theme
 
 # Apply the selected theme dynamically
 if theme == "Dark":
-    st.set_page_config(page_title="Dark Mode Example", page_icon="🌙", layout="wide", initial_sidebar_state="expanded")
     st.markdown("""
         <style>
         body {
@@ -23,7 +31,6 @@ if theme == "Dark":
         </style>
         """, unsafe_allow_html=True)
 else:
-    st.set_page_config(page_title="Light Mode Example", page_icon="☀️", layout="wide", initial_sidebar_state="expanded")
     st.markdown("""
         <style>
         body {
