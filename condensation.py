@@ -50,7 +50,7 @@ readme_path = "README.md"
 toggle_assistant = st.checkbox("💬 Assistant", value=False, key="toggle_assistant_checkbox")
 
 if toggle_assistant and llm:
-    with st.expander("Ask me!", expanded=True):
+    with st.expander("Ask me!", expanded=True, key="assistant_expander"):
         # Check if README.md should be processed first
         if "readme_processed" not in st.session_state:
             st.session_state.readme_processed = False
@@ -78,11 +78,21 @@ if toggle_assistant and llm:
                             st.success(response.content, key="assistant_success")
                         else:
                             st.warning("No response received from the assistant.", key="assistant_warning")
+                        st.session_state["last_query"] = user_query # Store the last query
                     except Exception as e:
                         st.error(f"Assistant query failed: {e}", key="assistant_error")
 
 elif toggle_assistant and not llm:
     st.warning("Assistant is unavailable due to initialization errors.", key="assistant_unavailable_warning")
+
+# Theme toggle button (moved outside the 'with col_theme:' block for simplicity in this example)
+toggle_theme = st.button("Toggle theme", key="toggle_theme_button")
+if toggle_theme:
+    st.session_state.theme = "dark" if st.session_state.theme == "light" else "light"
+    if st.session_state.theme == "dark":
+        st.markdown(dark, unsafe_allow_html=True)
+    else:
+        st.markdown(light, unsafe_allow_html=True)
 
 
 
