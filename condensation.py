@@ -61,6 +61,40 @@ if st.session_state.theme == "dark":
 else:
     st.markdown(light, unsafe_allow_html=True)
 
+
+import google.generativeai as genai
+from langchain_core.messages import HumanMessage
+
+# Retrieve the API key from Streamlit secrets
+api_key = st.secrets["GEMINI_API_KEY"]
+
+if not api_key:
+    st.error("API key not found. Please set the GEMINI_API_KEY in Streamlit secrets.")
+else:
+    # Configure the Gemini API
+    genai.configure(api_key=api_key)
+
+    # Select the Gemini model
+    model = genai.GenerativeModel('gemini-1.5-flash') # Or another available Gemini model
+
+    # Right side assistant UI using columns
+    col1, col2 = st.columns([2, 1])  # Wider left side, narrower right side
+
+    with col2:
+        with st.expander("💬 Assistant", expanded=False):
+            st.markdown("Ask anything related to condensation or fluid properties.")
+            user_query = st.text_input("Your question:", key="assistant_input")
+            if user_query:
+                with st.spinner("Thinking..."):
+                    try:
+                        response = model.generate_content([user_query])
+                        if response and hasattr(response, "text"):
+                            st.success(response.text)
+                        else:
+                            st.warning("No response received from the assistant.")
+                    except Exception as e:
+                        st.error(f"Assistant failed: {e}")
+
 # ---------------------------
 # Utility Function: CoolProp Calculation using HEOS
 # ---------------------------
@@ -370,38 +404,5 @@ elif mode == "Multiple Data":
                 file_name="graph.png",
                 mime="image/png"
             )
-
-import google.generativeai as genai
-from langchain_core.messages import HumanMessage
-
-# Retrieve the API key from Streamlit secrets
-api_key = st.secrets["GEMINI_API_KEY"]
-
-if not api_key:
-    st.error("API key not found. Please set the GEMINI_API_KEY in Streamlit secrets.")
-else:
-    # Configure the Gemini API
-    genai.configure(api_key=api_key)
-
-    # Select the Gemini model
-    model = genai.GenerativeModel('gemini-1.5-flash') # Or another available Gemini model
-
-    # Right side assistant UI using columns
-    col1, col2 = st.columns([2, 1])  # Wider left side, narrower right side
-
-    with col2:
-        with st.expander("💬 Assistant", expanded=False):
-            st.markdown("Ask anything related to condensation or fluid properties.")
-            user_query = st.text_input("Your question:", key="assistant_input")
-            if user_query:
-                with st.spinner("Thinking..."):
-                    try:
-                        response = model.generate_content([user_query])
-                        if response and hasattr(response, "text"):
-                            st.success(response.text)
-                        else:
-                            st.warning("No response received from the assistant.")
-                    except Exception as e:
-                        st.error(f"Assistant failed: {e}")
 
 
