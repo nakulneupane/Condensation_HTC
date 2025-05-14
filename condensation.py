@@ -50,7 +50,7 @@ if "theme" not in st.session_state:
 # Create two columns for the toggle buttons
 col_theme, col_assistant = st.columns([1, 1])  # Adjust the ratio as needed
 
-# Toggle theme button in the left column
+# Toggle theme button in the left column with a unique key
 with col_theme:
     toggle_theme = st.button("Toggle theme", key="toggle_theme_button")
 
@@ -83,7 +83,7 @@ if api_key:
 # Path to README.md
 readme_path = "README.md"
 
-# Assistant UI with toggle button in the right column
+# Assistant UI with toggle button in the right column with a unique key
 with col_assistant:
     toggle_assistant = st.checkbox("💬 Assistant", value=False, key="toggle_assistant_checkbox")
 
@@ -106,7 +106,7 @@ with col_assistant:
                     st.error(f"Failed to load README.md: {e}")
             else:
                 # Now, the assistant is ready for subsequent questions
-                user_query = st.text_input("Your question:", key="assistant_input")
+                user_query = st.text_input("Your question:", key="assistant_input_textbox")
                 if user_query:
                     with st.spinner("Thinking..."):
                         try:
@@ -120,6 +120,7 @@ with col_assistant:
 
     elif toggle_assistant and not llm:
         st.warning("Assistant is unavailable due to initialization errors.")
+
 
 
 
