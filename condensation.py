@@ -68,42 +68,82 @@ else:
     st.markdown(light, unsafe_allow_html=True)
 
 # Retrieve API key
+import streamlit as st
+from langchain_core.messages import HumanMessage
+from langchain_google_genai import ChatGoogleGenerativeAI
+
+# Initialize Langchain/LLM with your API key
 api_key = st.secrets.get("GEMINI_API_KEY")
 llm = None
 
-if not api_key:
-    st.error(
-        "Gemini API key not found. Please ensure 'GEMINI_API_KEY' is set in Streamlit secrets."
-    )
-else:
+if api_key:
     try:
-        # Try initializing with a specific model
-        model_name = "gemini-2.0-flash"  # Or try "gemini-pro" for testing
+        model_name = "gemini-2.0-flash"
         llm = ChatGoogleGenerativeAI(
             model=model_name, google_api_key=api_key, temperature=0.3
         )
     except Exception as e:
         st.error(f"Error initializing Gemini model '{model_name}': {e}")
 
-# Assistant UI
+# Path to README.md
+readme_path = "README.md"
+
+# Assistant UI with toggle button
+col_theme, col_assistant = st.columns([1, 1])
+
+with col_theme:
+    toggle_theme = st.button("Toggle theme")
+
+    if toggle_theme:
+        if st.session_state.theme == "light":
+            st.session_state.theme = "dark"
+        else:
+            st.session_state.theme = "light"
+
+# Apply theme
+if st.session_state.theme == "dark":
+    st.markdown(dark, unsafe_allow_html=True)
+else:
+    st.markdown(light, unsafe_allow_html=True)
+
+# Read README.md when the assistant is turned on
 with col_assistant:
     toggle_assistant = st.toggle("💬 Assistant", value=False)
 
     if toggle_assistant and llm:
         with st.expander("Ask me!", expanded=True):
-            user_query = st.text_input("Your question:", key="assistant_input")
-            if user_query:
-                with st.spinner("Thinking..."):
-                    try:
-                        response = llm.invoke([HumanMessage(content=user_query)])
-                        if response and hasattr(response, "content"):
-                            st.success(response.content)
-                        else:
-                            st.warning("No response received from the assistant.")
-                    except Exception as e:
-                        st.error(f"Assistant query failed: {e}")
+            # Check if README.md should be processed first
+            if "readme_processed" not in st.session_state:
+                st.session_state.readme_processed = False
+
+            if not st.session_state.readme_processed:
+                try:
+                    with open(readme_path, 'r') as file:
+                        readme_content = file.read()
+                    # Send the README content to the LLM for processing
+                    prompt = f"Here is the README for the app:\n\n{readme_content}\n\nPlease process it for context. Then, you're ready to answer questions."
+                    response = llm.invoke([HumanMessage(content=prompt)])
+                    st.session_state.readme_processed = True  # Mark README as processed
+                    st.success("README has been processed. You can now ask questions.")
+                except Exception as e:
+                    st.error(f"Failed to load README.md: {e}")
+            else:
+                # Now, the assistant is ready for subsequent questions
+                user_query = st.text_input("Your question:", key="assistant_input")
+                if user_query:
+                    with st.spinner("Thinking..."):
+                        try:
+                            response = llm.invoke([HumanMessage(content=user_query)])
+                            if response and hasattr(response, "content"):
+                                st.success(response.content)
+                            else:
+                                st.warning("No response received from the assistant.")
+                        except Exception as e:
+                            st.error(f"Assistant query failed: {e}")
+
     elif toggle_assistant and not llm:
         st.warning("Assistant is unavailable due to initialization errors.")
+
 
 # ---------------------------
 # Utility Function: CoolProp Calculation using HEOS
