@@ -86,6 +86,15 @@ with st.sidebar.expander("💬 Assistant Help Panel"):
     Need more? Drop a message below! 👇
     """)
 
+with st.sidebar.expander("🗨️ Ask Assistant"):
+    user_query = st.text_input("Ask me something (e.g., 'What is mass flux?')", key="assistant_input")
+    if user_query:
+        if "mass flux" in user_query.lower():
+            st.markdown("**Mass Flux (G)** is the mass flow rate per unit area, usually in kg/m².s. It affects the turbulence and heat transfer.")
+        elif "quality" in user_query.lower():
+            st.markdown("**Quality (x)** refers to the mass fraction of vapor in a liquid-vapor mixture (0 = all liquid, 1 = all vapor).")
+        else:
+            st.info("I'm still learning. Try asking about terms like: **mass flux**, **quality**, **viscosity**, **CoolProp**, etc.")
 
 # ---------------------------
 # Utility Function: CoolProp Calculation using HEOS
