@@ -52,7 +52,7 @@ col_theme, col_assistant = st.columns([1, 1])  # Adjust the ratio as needed
 
 # Toggle theme button in the left column
 with col_theme:
-    toggle_theme = st.button("Toggle theme")
+    toggle_theme = st.button("Toggle theme", key="toggle_theme_button")
 
     # Change the theme based on the button state
     if toggle_theme:
@@ -83,27 +83,9 @@ if api_key:
 # Path to README.md
 readme_path = "README.md"
 
-# Assistant UI with toggle button
-col_theme, col_assistant = st.columns([1, 1])
-
-with col_theme:
-    toggle_theme = st.button("Toggle theme")
-
-    if toggle_theme:
-        if st.session_state.theme == "light":
-            st.session_state.theme = "dark"
-        else:
-            st.session_state.theme = "light"
-
-# Apply theme
-if st.session_state.theme == "dark":
-    st.markdown(dark, unsafe_allow_html=True)
-else:
-    st.markdown(light, unsafe_allow_html=True)
-
-# Read README.md when the assistant is turned on
+# Assistant UI with toggle button in the right column
 with col_assistant:
-    toggle_assistant = st.toggle("💬 Assistant", value=False)
+    toggle_assistant = st.checkbox("💬 Assistant", value=False, key="toggle_assistant_checkbox")
 
     if toggle_assistant and llm:
         with st.expander("Ask me!", expanded=True):
@@ -138,6 +120,7 @@ with col_assistant:
 
     elif toggle_assistant and not llm:
         st.warning("Assistant is unavailable due to initialization errors.")
+
 
 
 # ---------------------------
