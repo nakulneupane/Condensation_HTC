@@ -371,15 +371,14 @@ elif mode == "Multiple Data":
                 mime="image/png"
             )
 import os
-import streamlit as st
 from langchain_openai import ChatOpenAI
 from langchain.schema import HumanMessage
 
-# Retrieve the API key from the local system's environment variables
+# Retrieve the API key from the environment
 api_key = os.getenv('YOUR_API_KEY_NAME')
 
-if not api_key:
-    st.error("API key not found. Please set the YOUR_API_KEY_NAME environment variable.")
+if api_key is None:
+    st.error("API Key not found. Please set the 'YOUR_API_KEY_NAME' environment variable.")
 else:
     # Initialize the OpenAI-powered assistant
     llm = ChatOpenAI(openai_api_key=api_key, model="gpt-3.5-turbo", temperature=0.3)
