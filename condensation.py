@@ -61,34 +61,6 @@ if st.session_state.theme == "dark":
 else:
     st.markdown(light, unsafe_allow_html=True)
 
-
-import streamlit as st
-from langchain.chat_models import ChatOpenAI
-from langchain.schema import HumanMessage
-
-# Load OpenAI API key securely from .streamlit/secrets.toml
-api_key = st.secrets["openai"]["openai_api_key"]
-
-# Layout: 75% content on left, 25% assistant on right
-col_left, col_right = st.columns([3, 1])
-
-with col_right:
-    with st.expander("🧠 Assistant", expanded=True):
-        st.markdown("Ask about heat transfer, refrigerants, inputs, etc.")
-        user_query = st.text_input("Ask your question here:", key="assistant_input")
-
-        if user_query:
-            with st.spinner("Thinking..."):
-                try:
-                    llm = ChatOpenAI(openai_api_key=api_key, model_name="gpt-3.5-turbo", temperature=0.3)
-                    response = llm([HumanMessage(content=user_query)])
-                    st.markdown(f"**Assistant:** {response.content}")
-                except Exception as e:
-                    st.error(f"Error from assistant: {e}")
-
-
-
-
 # ---------------------------
 # Utility Function: CoolProp Calculation using HEOS
 # ---------------------------
@@ -398,3 +370,27 @@ elif mode == "Multiple Data":
                 file_name="graph.png",
                 mime="image/png"
             )
+import streamlit as st
+from langchain_openai import ChatOpenAI
+from langchain.schema import HumanMessage
+
+# Set API key from Streamlit secrets
+api_key = st.secrets["openai_api_key"]
+
+# Initialize the OpenAI-powered assistant
+llm = ChatOpenAI(openai_api_key=api_key, model="gpt-3.5-turbo", temperature=0.3)
+
+# Right side assistant UI using columns
+col1, col2 = st.columns([2, 1])  # Wider left side, narrower right side
+
+with col2:
+    with st.expander("💬 Assistant", expanded=False):
+        st.markdown("Ask anything related to condensation or fluid properties.")
+        user_query = st.text_input("Your question:", key="assistant_input")
+        if user_query:
+            with st.spinner("Thinking..."):
+                try:
+                    response = llm([HumanMessage(content=user_query)])
+                    st.success(response.content)
+                except Exception as e:
+                    st.error(f"Assistant failed: {e}")
