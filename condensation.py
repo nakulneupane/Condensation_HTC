@@ -66,7 +66,25 @@ else:
     st.markdown(light, unsafe_allow_html=True)
 
 
+# Assistant or Help Panel
+with st.sidebar.expander("💬 Assistant Help Panel"):
+    st.markdown("""
+    #### 🤖 Assistant Tips:
+    **Modes:**
+    - Use *Single Data Point* for quick prediction from manual or CoolProp input.
+    - Use *Multiple Data* to upload CSV/Excel and batch predict.
 
+    **Common Issues:**
+    - Ensure temperature is in **Kelvin** (K).
+    - Viscosities should be in **Pa.s**.
+    - If using CoolProp, make sure the refrigerant name is valid and correctly formatted.
+    
+    **Format Help for File Upload:**
+    Your CSV/Excel should contain **no headers** (it auto assigns) and columns ordered as:
+    `G, x, Tsat, rho_l, rho_v, mu_l, mu_v, k_v, k_l, surface_tension, Cp_v, Cp_l, Psat, D`
+    
+    Need more? Drop a message below! 👇
+    """)
 
 
 # ---------------------------
