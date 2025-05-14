@@ -75,7 +75,7 @@ if not api_key:
 else:
     # Initialize Gemini via Langchain
     llm = ChatGoogleGenerativeAI(
-            model_name="gemini-1.5-flash", google_api_key=api_key, temperature=0.3
+            model_name="gemini-2.0-flash", google_api_key=api_key, temperature=0.3
         )
 
     # Assistant toggle button and UI in the right column
