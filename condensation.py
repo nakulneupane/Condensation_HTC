@@ -74,7 +74,9 @@ if not api_key:
     st.error("API key not found. Please set the GEMINI_API_KEY in Streamlit secrets.")
 else:
     # Initialize Gemini via Langchain
-    llm = ChatGoogleGenerativeAI(model_name="gemini-pro", google_api_key=api_key, temperature=0.3)
+    llm = ChatGoogleGenerativeAI(
+            model_name="gemini-1.5-flash", google_api_key=api_key, temperature=0.3
+        )
 
     # Assistant toggle button and UI in the right column
     with col_assistant:
