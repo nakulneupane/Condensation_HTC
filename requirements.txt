@@ -9,4 +9,6 @@ scikit-learn
 xgboost
 openpyxl
 matplotlib
-
+langchain
+openai
+python-dotenv  
