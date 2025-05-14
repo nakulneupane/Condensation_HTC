@@ -12,3 +12,4 @@ matplotlib
 langchain
 openai
 python-dotenv  
+os
