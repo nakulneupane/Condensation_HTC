@@ -10,23 +10,7 @@ import matplotlib.pyplot as plt
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage
 
-# Define the CSS for dark and light themes
-dark = """
-    <style>
-        .stApp {
-            background-color: black;
-            color: white;
-        }
-        .stButton>button {
-            background-color: #90D5FF;
-            color: white;
-        }
-        .stButton>button:hover {
-            background-color: #6a0dad;
-        }
-    </style>
-"""
-
+# Define the CSS for the light theme
 light = """
     <style>
         .stApp {
@@ -43,14 +27,8 @@ light = """
     </style>
 """
 
-# Apply the theme to the app (default is light theme)
-if "theme" not in st.session_state:
-    st.session_state.theme = "light"
-
-if st.session_state.theme == "dark":
-    st.markdown(dark, unsafe_allow_html=True)
-else:
-    st.markdown(light, unsafe_allow_html=True)
+# Apply the light theme to the app
+st.markdown(light, unsafe_allow_html=True)
 
 # Initialize Langchain/LLM with your API key
 api_key = st.secrets.get("GEMINI_API_KEY")
@@ -68,7 +46,7 @@ if api_key:
 # Path to README.md
 readme_path = "README.md"
 
-# Assistant UI with a toggle button to activate the assistant
+# Assistant UI
 toggle_assistant = st.checkbox("💬 Assistant", value=False, key="toggle_assistant_checkbox")
 
 if toggle_assistant and llm:
@@ -92,7 +70,7 @@ if toggle_assistant and llm:
             # Now, the assistant is ready for subsequent questions
             user_query = st.text_input("Your question:", key="assistant_input_textbox")
             if user_query:
-                with st.spinner("Thinking..."):
+                with st.spinner("Thinking...", key="assistant_spinner"):
                     try:
                         response = llm.invoke([HumanMessage(content=user_query)])
                         if response and hasattr(response, "content"):
@@ -104,6 +82,7 @@ if toggle_assistant and llm:
 
 elif toggle_assistant and not llm:
     st.warning("Assistant is unavailable due to initialization errors.")
+
 
 
 
