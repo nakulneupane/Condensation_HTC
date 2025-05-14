@@ -63,9 +63,10 @@ if toggle_assistant and llm:
                 prompt = f"Here is the README for the app:\n\n{readme_content}\n\nPlease process it for context. Then, you're ready to answer questions."
                 response = llm.invoke([HumanMessage(content=prompt)])
                 st.session_state.readme_processed = True  # Mark README as processed
-                st.success("README has been processed. You can now ask questions.")
+                st.success("README has been processed. You can now ask questions.", key="readme_processed_success")
             except Exception as e:
-                st.error(f"Failed to load README.md: {e}")
+                st.error(f"Failed to load README.md: {e}", key="readme_error")
+
         else:
             # Now, the assistant is ready for subsequent questions
             user_query = st.text_input("Your question:", key="assistant_input_textbox")
@@ -74,14 +75,15 @@ if toggle_assistant and llm:
                     try:
                         response = llm.invoke([HumanMessage(content=user_query)])
                         if response and hasattr(response, "content"):
-                            st.success(response.content)
+                            st.success(response.content, key="assistant_success")
                         else:
-                            st.warning("No response received from the assistant.")
+                            st.warning("No response received from the assistant.", key="assistant_warning")
                     except Exception as e:
-                        st.error(f"Assistant query failed: {e}")
+                        st.error(f"Assistant query failed: {e}", key="assistant_error")
 
 elif toggle_assistant and not llm:
-    st.warning("Assistant is unavailable due to initialization errors.")
+    st.warning("Assistant is unavailable due to initialization errors.", key="assistant_unavailable_warning")
+
 
 
 
