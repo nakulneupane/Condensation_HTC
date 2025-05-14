@@ -43,25 +43,10 @@ light = """
     </style>
 """
 
-# Display the initial theme based on the session state
+# Apply the theme to the app (default is light theme)
 if "theme" not in st.session_state:
-    st.session_state.theme = "light"  # Default theme is light
+    st.session_state.theme = "light"
 
-# Create two columns for the toggle buttons
-col_theme, col_assistant = st.columns([1, 1])  # Adjust the ratio as needed
-
-# Toggle theme button in the left column with a unique key
-with col_theme:
-    toggle_theme = st.button("Toggle theme", key="toggle_theme_button")
-
-    # Change the theme based on the button state
-    if toggle_theme:
-        if st.session_state.theme == "light":
-            st.session_state.theme = "dark"
-        else:
-            st.session_state.theme = "light"
-
-# Apply the theme to the app
 if st.session_state.theme == "dark":
     st.markdown(dark, unsafe_allow_html=True)
 else:
@@ -83,43 +68,43 @@ if api_key:
 # Path to README.md
 readme_path = "README.md"
 
-# Assistant UI with toggle button in the right column with a unique key
-with col_assistant:
-    toggle_assistant = st.checkbox("💬 Assistant", value=False, key="toggle_assistant_checkbox")
+# Assistant UI with a toggle button to activate the assistant
+toggle_assistant = st.checkbox("💬 Assistant", value=False, key="toggle_assistant_checkbox")
 
-    if toggle_assistant and llm:
-        with st.expander("Ask me!", expanded=True):
-            # Check if README.md should be processed first
-            if "readme_processed" not in st.session_state:
-                st.session_state.readme_processed = False
+if toggle_assistant and llm:
+    with st.expander("Ask me!", expanded=True):
+        # Check if README.md should be processed first
+        if "readme_processed" not in st.session_state:
+            st.session_state.readme_processed = False
 
-            if not st.session_state.readme_processed:
-                try:
-                    with open(readme_path, 'r') as file:
-                        readme_content = file.read()
-                    # Send the README content to the LLM for processing
-                    prompt = f"Here is the README for the app:\n\n{readme_content}\n\nPlease process it for context. Then, you're ready to answer questions."
-                    response = llm.invoke([HumanMessage(content=prompt)])
-                    st.session_state.readme_processed = True  # Mark README as processed
-                    st.success("README has been processed. You can now ask questions.")
-                except Exception as e:
-                    st.error(f"Failed to load README.md: {e}")
-            else:
-                # Now, the assistant is ready for subsequent questions
-                user_query = st.text_input("Your question:", key="assistant_input_textbox")
-                if user_query:
-                    with st.spinner("Thinking..."):
-                        try:
-                            response = llm.invoke([HumanMessage(content=user_query)])
-                            if response and hasattr(response, "content"):
-                                st.success(response.content)
-                            else:
-                                st.warning("No response received from the assistant.")
-                        except Exception as e:
-                            st.error(f"Assistant query failed: {e}")
+        if not st.session_state.readme_processed:
+            try:
+                with open(readme_path, 'r') as file:
+                    readme_content = file.read()
+                # Send the README content to the LLM for processing
+                prompt = f"Here is the README for the app:\n\n{readme_content}\n\nPlease process it for context. Then, you're ready to answer questions."
+                response = llm.invoke([HumanMessage(content=prompt)])
+                st.session_state.readme_processed = True  # Mark README as processed
+                st.success("README has been processed. You can now ask questions.")
+            except Exception as e:
+                st.error(f"Failed to load README.md: {e}")
+        else:
+            # Now, the assistant is ready for subsequent questions
+            user_query = st.text_input("Your question:", key="assistant_input_textbox")
+            if user_query:
+                with st.spinner("Thinking..."):
+                    try:
+                        response = llm.invoke([HumanMessage(content=user_query)])
+                        if response and hasattr(response, "content"):
+                            st.success(response.content)
+                        else:
+                            st.warning("No response received from the assistant.")
+                    except Exception as e:
+                        st.error(f"Assistant query failed: {e}")
 
-    elif toggle_assistant and not llm:
-        st.warning("Assistant is unavailable due to initialization errors.")
+elif toggle_assistant and not llm:
+    st.warning("Assistant is unavailable due to initialization errors.")
+
 
 
 
