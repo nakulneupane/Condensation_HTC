@@ -63,61 +63,6 @@ if st.session_state.theme == "dark":
 else:
     st.markdown(light, unsafe_allow_html=True)
 
-
-import os
-from langchain.chat_models import ChatOpenAI
-from langchain.schema import HumanMessage
-
-# Assistant Tips Panel
-with st.sidebar.expander("💬 Assistant Help Panel"):
-    st.markdown("""
-    #### 🤖 Assistant Tips:
-    **Modes:**
-    - Use *Single Data Point* for quick prediction from manual or CoolProp input.
-    - Use *Multiple Data* to upload CSV/Excel and batch predict.
-
-    **Common Issues:**
-    - Ensure temperature is in **Kelvin** (K).
-    - Viscosities should be in **Pa.s**.
-    - If using CoolProp, make sure the refrigerant name is valid and correctly formatted.
-    
-    **Format Help for File Upload:**
-    Your CSV/Excel should contain **no headers** (they're auto-assigned) in this order:
-    `G, x, Tsat, rho_l, rho_v, mu_l, mu_v, k_v, k_l, surface_tension, Cp_v, Cp_l, Psat, D`
-
-    Need more help? Ask the assistant below 👇
-    """)
-
-# Use Streamlit secrets or fallback to a manual key (don't hardcode directly in real apps)
-api_key = st.secrets["openai_api_key"]  # Will raise an error if missing
-if api_key and api_key.startswith("sk-"):
-    os.environ["OPENAI_API_KEY"] = api_key
-else:
-    st.sidebar.warning("⚠️ OpenAI API key not found or invalid. Add it in Streamlit secrets.")
-
-# Initialize LangChain model
-try:
-    llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0.3)
-except Exception as e:
-    st.sidebar.error(f"LangChain setup failed: {e}")
-
-# Assistant Query Panel
-with st.sidebar.expander("🗨️ Ask Assistant"):
-    st.markdown("This assistant uses OpenAI's GPT to help with heat transfer concepts or input guidance.")
-
-    # Optional: use `st.chat_input` instead for better UI (requires Streamlit >= 1.30)
-    user_query = st.text_input("Ask something about heat transfer:", key="langchain_input")
-    # user_query = st.chat_input("Ask something about heat transfer:")
-
-    if user_query:
-        with st.spinner("Thinking..."):
-            try:
-                response = llm([HumanMessage(content=user_query)])
-                st.markdown(f"**Assistant:** {response.content}")
-            except Exception as e:
-                st.error(f"❌ Assistant error: {e}")
-
-
 # ---------------------------
 # Utility Function: CoolProp Calculation using HEOS
 # ---------------------------
