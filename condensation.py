@@ -67,34 +67,43 @@ if st.session_state.theme == "dark":
 else:
     st.markdown(light, unsafe_allow_html=True)
 
-# Retrieve the API key from Streamlit secrets
-api_key = st.secrets["GEMINI_API_KEY"]
+# Retrieve API key
+api_key = st.secrets.get("GEMINI_API_KEY")
+llm = None
 
 if not api_key:
-    st.error("API key not found. Please set the GEMINI_API_KEY in Streamlit secrets.")
+    st.error(
+        "Gemini API key not found. Please ensure 'GEMINI_API_KEY' is set in Streamlit secrets."
+    )
 else:
-    # Initialize Gemini via Langchain
-    llm = ChatGoogleGenerativeAI(
-            model_name="gemini-2.0-flash", google_api_key=api_key, temperature=0.3
+    try:
+        # Try initializing with a specific model
+        model_name = "gemini-1.5-flash"  # Or try "gemini-pro" again for testing
+        llm = ChatGoogleGenerativeAI(
+            model_name=model_name, google_api_key=api_key, temperature=0.3
         )
+    except Exception as e:
+        st.error(f"Error initializing Gemini model '{model_name}': {e}")
 
-    # Assistant toggle button and UI in the right column
-    with col_assistant:
-        toggle_assistant = st.toggle("💬 Assistant", value=False) # Use a toggle for a cleaner look
+# Assistant UI
+with col_assistant:
+    toggle_assistant = st.toggle("💬 Assistant", value=False)
 
-        if toggle_assistant:
-            with st.expander("Ask me!", expanded=True): # Keep it expanded when toggled on
-                user_query = st.text_input("Your question:", key="assistant_input")
-                if user_query:
-                    with st.spinner("Thinking..."):
-                        try:
-                            response = llm.invoke([HumanMessage(content=user_query)])
-                            if response and hasattr(response, "content"):
-                                st.success(response.content)
-                            else:
-                                st.warning("No response received from the assistant.")
-                        except Exception as e:
-                            st.error(f"Assistant failed: {e}")
+    if toggle_assistant and llm:
+        with st.expander("Ask me!", expanded=True):
+            user_query = st.text_input("Your question:", key="assistant_input")
+            if user_query:
+                with st.spinner("Thinking..."):
+                    try:
+                        response = llm.invoke([HumanMessage(content=user_query)])
+                        if response and hasattr(response, "content"):
+                            st.success(response.content)
+                        else:
+                            st.warning("No response received from the assistant.")
+                    except Exception as e:
+                        st.error(f"Assistant query failed: {e}")
+    elif toggle_assistant and not llm:
+        st.warning("Assistant is unavailable due to initialization errors.")
 
 # ---------------------------
 # Utility Function: CoolProp Calculation using HEOS
