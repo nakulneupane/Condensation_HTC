@@ -7,6 +7,8 @@ from io import BytesIO
 import requests
 from PIL import Image
 import matplotlib.pyplot as plt
+import google.generativeai as genai
+from langchain_core.messages import HumanMessage
 
 # Define the CSS for dark and light themes
 dark = """
@@ -45,25 +47,25 @@ light = """
 if "theme" not in st.session_state:
     st.session_state.theme = "light"  # Default theme is light
 
-# Create a toggle button
-toggle = st.button("Toggle theme")
+# Create two columns for the toggle buttons
+col_theme, col_assistant = st.columns([1, 1])  # Adjust the ratio as needed
 
-# Change the theme based on the button state
-if toggle:
-    if st.session_state.theme == "light":
-        st.session_state.theme = "dark"
-    else:
-        st.session_state.theme = "light"
+# Toggle theme button in the left column
+with col_theme:
+    toggle_theme = st.button("Toggle theme")
+
+    # Change the theme based on the button state
+    if toggle_theme:
+        if st.session_state.theme == "light":
+            st.session_state.theme = "dark"
+        else:
+            st.session_state.theme = "light"
 
 # Apply the theme to the app
 if st.session_state.theme == "dark":
     st.markdown(dark, unsafe_allow_html=True)
 else:
     st.markdown(light, unsafe_allow_html=True)
-
-
-import google.generativeai as genai
-from langchain_core.messages import HumanMessage
 
 # Retrieve the API key from Streamlit secrets
 api_key = st.secrets["GEMINI_API_KEY"]
@@ -77,23 +79,24 @@ else:
     # Select the Gemini model
     model = genai.GenerativeModel('gemini-1.5-flash') # Or another available Gemini model
 
-    # Right side assistant UI using columns
-    col1, col2 = st.columns([2, 1])  # Wider left side, narrower right side
+    # Assistant toggle button and UI in the right column
+    with col_assistant:
+        toggle_assistant = st.toggle("💬 Assistant", value=False) # Use a toggle for a cleaner look
 
-    with col2:
-        with st.expander("💬 Assistant", expanded=False):
-            st.markdown("Ask anything related to condensation or fluid properties.")
-            user_query = st.text_input("Your question:", key="assistant_input")
-            if user_query:
-                with st.spinner("Thinking..."):
-                    try:
-                        response = model.generate_content([user_query])
-                        if response and hasattr(response, "text"):
-                            st.success(response.text)
-                        else:
-                            st.warning("No response received from the assistant.")
-                    except Exception as e:
-                        st.error(f"Assistant failed: {e}")
+        if toggle_assistant:
+            with st.expander("Ask me!", expanded=True): # Keep it expanded when toggled on
+                st.markdown("Ask anything related to condensation or fluid properties.")
+                user_query = st.text_input("Your question:", key="assistant_input")
+                if user_query:
+                    with st.spinner("Thinking..."):
+                        try:
+                            response = model.generate_content([user_query])
+                            if response and hasattr(response, "text"):
+                                st.success(response.text)
+                            else:
+                                st.warning("No response received from the assistant.")
+                        except Exception as e:
+                            st.error(f"Assistant failed: {e}")
 
 # ---------------------------
 # Utility Function: CoolProp Calculation using HEOS
