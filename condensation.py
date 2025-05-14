@@ -7,7 +7,7 @@ from io import BytesIO
 import requests
 from PIL import Image
 import matplotlib.pyplot as plt
-import google.generativeai as genai
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage
 
 # Define the CSS for dark and light themes
@@ -73,11 +73,8 @@ api_key = st.secrets["GEMINI_API_KEY"]
 if not api_key:
     st.error("API key not found. Please set the GEMINI_API_KEY in Streamlit secrets.")
 else:
-    # Configure the Gemini API
-    genai.configure(api_key=api_key)
-
-    # Select the Gemini model
-    model = genai.GenerativeModel('gemini-1.5-flash') # Or another available Gemini model
+    # Initialize Gemini via Langchain
+    llm = ChatGoogleGenerativeAI(model_name="gemini-1.5-flash", google_api_key=api_key, temperature=0.3)
 
     # Assistant toggle button and UI in the right column
     with col_assistant:
@@ -89,9 +86,9 @@ else:
                 if user_query:
                     with st.spinner("Thinking..."):
                         try:
-                            response = model.generate_content([user_query])
-                            if response and hasattr(response, "text"):
-                                st.success(response.text)
+                            response = llm.invoke([HumanMessage(content=user_query)])
+                            if response and hasattr(response, "content"):
+                                st.success(response.content)
                             else:
                                 st.warning("No response received from the assistant.")
                         except Exception as e:
