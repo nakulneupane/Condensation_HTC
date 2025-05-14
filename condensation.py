@@ -78,9 +78,9 @@ if not api_key:
 else:
     try:
         # Try initializing with a specific model
-        model_name = "gemini-2.0-flash"  # Or try "gemini-pro" again for testing
+        model_name = "gemini-2.0-flash"  # Or try "gemini-pro" for testing
         llm = ChatGoogleGenerativeAI(
-            model_name=model_name, google_api_key=api_key, temperature=0.3
+            model=model_name, google_api_key=api_key, temperature=0.3
         )
     except Exception as e:
         st.error(f"Error initializing Gemini model '{model_name}': {e}")
