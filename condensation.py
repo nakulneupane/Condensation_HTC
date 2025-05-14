@@ -86,15 +86,23 @@ with st.sidebar.expander("💬 Assistant Help Panel"):
     Need more? Drop a message below! 👇
     """)
 
+# API key
+os.environ["OPENAI_API_KEY"] = "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"  # ← Replace this with your actual key or use st.secrets
+
+# Initialize LangChain Chat Model
+llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0.3)
+
 with st.sidebar.expander("🗨️ Ask Assistant"):
-    user_query = st.text_input("Ask me something (e.g., 'What is mass flux?')", key="assistant_input")
+    st.markdown("This assistant uses OpenAI's GPT to answer your technical questions.")
+    user_query = st.text_input("Ask me something about heat transfer or inputs:", key="langchain_input")
+
     if user_query:
-        if "mass flux" in user_query.lower():
-            st.markdown("**Mass Flux (G)** is the mass flow rate per unit area, usually in kg/m².s. It affects the turbulence and heat transfer.")
-        elif "quality" in user_query.lower():
-            st.markdown("**Quality (x)** refers to the mass fraction of vapor in a liquid-vapor mixture (0 = all liquid, 1 = all vapor).")
-        else:
-            st.info("I'm still learning. Try asking about terms like: **mass flux**, **quality**, **viscosity**, **CoolProp**, etc.")
+        with st.spinner("Thinking..."):
+            try:
+                response = llm([HumanMessage(content=user_query)])
+                st.markdown(f"**Assistant:** {response.content}")
+            except Exception as e:
+                st.error(f"Failed to get response: {e}")
 
 # ---------------------------
 # Utility Function: CoolProp Calculation using HEOS
