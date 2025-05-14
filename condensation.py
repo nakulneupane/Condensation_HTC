@@ -7,8 +7,6 @@ from io import BytesIO
 import requests
 from PIL import Image
 import matplotlib.pyplot as plt
-from langchain.chat_models import ChatOpenAI
-from langchain.schema import HumanMessage
 
 # Define the CSS for dark and light themes
 dark = """
