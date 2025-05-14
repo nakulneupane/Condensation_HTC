@@ -89,7 +89,7 @@ with st.sidebar.expander("💬 Assistant Help Panel"):
     """)
 
 # Use Streamlit secrets or fallback to a manual key (don't hardcode directly in real apps)
-api_key = st.secrets.get("openai_api_key", "your-fallback-key-here")
+api_key = st.secrets["openai_api_key"]  # Will raise an error if missing
 if api_key and api_key.startswith("sk-"):
     os.environ["OPENAI_API_KEY"] = api_key
 else:
