@@ -166,7 +166,7 @@ The input file must include 14 columns in the following order:
 If you encounter issues or have questions, contact the developer at:
 
 **Email**: \[[ge22m027@smail.iitm.ac.in](mailto:your-email@example.com)]
-**GitHub**: \[]
+**GitHub**: \[github.com/nakulneupane]
 **License**: IIT Madras
 
 ---
