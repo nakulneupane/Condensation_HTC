@@ -67,11 +67,6 @@ if st.session_state.theme == "dark":
 else:
     st.markdown(light, unsafe_allow_html=True)
 
-# Retrieve API key
-import streamlit as st
-from langchain_core.messages import HumanMessage
-from langchain_google_genai import ChatGoogleGenerativeAI
-
 # Initialize Langchain/LLM with your API key
 api_key = st.secrets.get("GEMINI_API_KEY")
 llm = None
