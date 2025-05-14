@@ -10,6 +10,5 @@ xgboost
 openpyxl
 matplotlib
 langchain
-google-generativeai
+langchain-google-genai
 langchain-core
-langchain langchain-google-genai
