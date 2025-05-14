@@ -9,3 +9,6 @@ scikit-learn
 xgboost
 openpyxl
 matplotlib
+langchain
+langchain-openai
+openai
