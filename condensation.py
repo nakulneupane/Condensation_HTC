@@ -85,7 +85,6 @@ else:
 
         if toggle_assistant:
             with st.expander("Ask me!", expanded=True): # Keep it expanded when toggled on
-                st.markdown("Ask anything related to condensation or fluid properties.")
                 user_query = st.text_input("Your question:", key="assistant_input")
                 if user_query:
                     with st.spinner("Thinking..."):
