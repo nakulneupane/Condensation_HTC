@@ -10,10 +10,6 @@ import matplotlib.pyplot as plt
 from langchain.chat_models import ChatOpenAI
 from langchain.schema import HumanMessage
 
-import streamlit as st
-
-import streamlit as st
-
 # Define the CSS for dark and light themes
 dark = """
     <style>
@@ -68,7 +64,11 @@ else:
     st.markdown(light, unsafe_allow_html=True)
 
 
-# Assistant or Help Panel
+import os
+from langchain.chat_models import ChatOpenAI
+from langchain.schema import HumanMessage
+
+# Assistant Tips Panel
 with st.sidebar.expander("💬 Assistant Help Panel"):
     st.markdown("""
     #### 🤖 Assistant Tips:
@@ -82,21 +82,32 @@ with st.sidebar.expander("💬 Assistant Help Panel"):
     - If using CoolProp, make sure the refrigerant name is valid and correctly formatted.
     
     **Format Help for File Upload:**
-    Your CSV/Excel should contain **no headers** (it auto assigns) and columns ordered as:
+    Your CSV/Excel should contain **no headers** (they're auto-assigned) in this order:
     `G, x, Tsat, rho_l, rho_v, mu_l, mu_v, k_v, k_l, surface_tension, Cp_v, Cp_l, Psat, D`
-    
-    Need more? Drop a message below! 👇
+
+    Need more help? Ask the assistant below 👇
     """)
 
-# API key
-os.environ["OPENAI_API_KEY"] = "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"  # ← Replace this with your actual key or use st.secrets
+# Use Streamlit secrets or fallback to a manual key (don't hardcode directly in real apps)
+api_key = st.secrets.get("openai_api_key", "your-fallback-key-here")
+if api_key and api_key.startswith("sk-"):
+    os.environ["OPENAI_API_KEY"] = api_key
+else:
+    st.sidebar.warning("⚠️ OpenAI API key not found or invalid. Add it in Streamlit secrets.")
 
-# Initialize LangChain Chat Model
-llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0.3)
+# Initialize LangChain model
+try:
+    llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0.3)
+except Exception as e:
+    st.sidebar.error(f"LangChain setup failed: {e}")
 
+# Assistant Query Panel
 with st.sidebar.expander("🗨️ Ask Assistant"):
-    st.markdown("This assistant uses OpenAI's GPT to answer your technical questions.")
-    user_query = st.text_input("Ask me something about heat transfer or inputs:", key="langchain_input")
+    st.markdown("This assistant uses OpenAI's GPT to help with heat transfer concepts or input guidance.")
+
+    # Optional: use `st.chat_input` instead for better UI (requires Streamlit >= 1.30)
+    user_query = st.text_input("Ask something about heat transfer:", key="langchain_input")
+    # user_query = st.chat_input("Ask something about heat transfer:")
 
     if user_query:
         with st.spinner("Thinking..."):
@@ -104,7 +115,8 @@ with st.sidebar.expander("🗨️ Ask Assistant"):
                 response = llm([HumanMessage(content=user_query)])
                 st.markdown(f"**Assistant:** {response.content}")
             except Exception as e:
-                st.error(f"Failed to get response: {e}")
+                st.error(f"❌ Assistant error: {e}")
+
 
 # ---------------------------
 # Utility Function: CoolProp Calculation using HEOS
