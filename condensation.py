@@ -156,12 +156,14 @@ def load_xgb_model():
     response = requests.get(xgb_url)
     response.raise_for_status()
     return joblib.load(BytesIO(response.content))
+    
 @st.cache_resource
 def load_xgb_skopt_model():
-    xgb_skopt_url = "https://drive.google.com/file/d/1tusRISrkzphhZ6mLe_xydhAaWnZ3EkKz"
+    xgb_skopt_url = "https://drive.google.com/uc?export=download&id=1tusRISrkzphhZ6mLe_xydhAaWnZ3EkKz"
     response = requests.get(xgb_skopt_url)
     response.raise_for_status()
     return joblib.load(BytesIO(response.content))
+
 @st.cache_resource
 def load_pca_model():
     pca_url = "https://drive.google.com/uc?export=download&id=1HHOaQgxUDbA6iPEAkQHh1gJvihz-MShn"
@@ -451,6 +453,7 @@ elif mode == "Multiple Data":
                 file_name="graph.png",
                 mime="image/png"
             )
+
 
 
 
