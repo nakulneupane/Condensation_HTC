@@ -337,7 +337,7 @@ elif mode == "Multiple Data":
             col_names = [
                 'G (kg/m2s)', 'x', 'Tsat (K)', 'rho_l', 'rho_v', 
                 'mu_l', 'mu_v', 'k_v', 'k_l', 'surface_tension', 
-                'Cp_v', 'Cp_l', 'Psat (Pa)', 'D (m)', 'Z'
+                'Cp_v', 'Cp_l', 'Z', 'Psat (Pa)', 'D (m)' 
             ]
             if uploaded_file.name.endswith('.csv'):
                 df = pd.read_csv(uploaded_file, header=None, skiprows=1, names=col_names)
@@ -421,6 +421,7 @@ elif mode == "Multiple Data":
                 file_name="graph.png",
                 mime="image/png"
             )
+
 
 
 
