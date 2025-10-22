@@ -344,6 +344,13 @@ elif mode == "Multiple Data":
         ("Optuna XGBoost", "Skopt XGBoost")
     )
 
+    # 🔹 PCA usage option
+    use_pca = st.radio(
+        "Would you like to use PCA for feature transformation?",
+        ("Yes", "No"),
+        index=0
+    )
+
     uploaded_file = st.file_uploader("Upload Excel or CSV file", type=["xlsx", "xls", "csv"])
 
     if uploaded_file is not None:
@@ -362,8 +369,6 @@ elif mode == "Multiple Data":
             st.dataframe(df)
 
             if st.button("Process Multiple Data"):
-                pca = load_pca_model()
-
                 # 🔹 Load selected model
                 if model_choice == "Optuna XGBoost":
                     xgb_model = load_xgb_model()
@@ -372,8 +377,17 @@ elif mode == "Multiple Data":
                     xgb_model = load_xgb_skopt_model()
                     st.success("Using Skopt-tuned XGBoost model.")
 
+                # 🔹 Load PCA if user wants it
+                if use_pca == "Yes":
+                    pca = load_pca_model()
+                    st.info("PCA transformation will be applied to the input data.")
+                else:
+                    pca = None
+                    st.info("PCA transformation will be skipped — raw (log-transformed) features will be used.")
+
                 predicted_htc_list = []
-                for index, row in df.iterrows():
+
+                for _, row in df.iterrows():
                     features = pd.DataFrame({
                         'G (kg/m2s)': [row['G (kg/m2s)']],
                         'x': [row['x']],
@@ -392,14 +406,21 @@ elif mode == "Multiple Data":
                         'D (m)': [row['D (m)']]
                     })
 
+                    # 🔹 Apply log transform (excluding x and Z)
                     epsilon = 1e-10
                     log_cols = [col for col in features.columns if col not in ['x', 'Z']]
                     log_features = features.copy()
                     log_features[log_cols] = np.log(features[log_cols] + epsilon)
 
-                    X_pca = pca.transform(log_features)
-                    predicted_log_h = xgb_model.predict(X_pca)
-                    predicted_h = np.exp(predicted_log_h)[0]
+                    # 🔹 Apply PCA (if selected)
+                    if pca is not None:
+                        X_input = pca.transform(log_features)
+                    else:
+                        X_input = log_features.values  # use directly without PCA
+
+                    # 🔹 Predict
+                    predicted_log_h = xgb_model.predict(X_input)
+                    predicted_h = float(np.exp(predicted_log_h).flatten()[0])
                     predicted_htc_list.append(predicted_h)
 
                 df['Predicted HTC (W/m²K)'] = predicted_htc_list
@@ -407,6 +428,7 @@ elif mode == "Multiple Data":
                 st.write("### Processed Data:")
                 st.dataframe(df)
 
+                # 🔹 Download processed results
                 output = BytesIO()
                 with pd.ExcelWriter(output, engine='openpyxl') as writer:
                     df.to_excel(writer, index=False, sheet_name='Results')
@@ -419,14 +441,18 @@ elif mode == "Multiple Data":
                     mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
                 )
 
-                st.info("The Mean Absolute Percentage Error of the Optuna model is 9.22 %. "
-                        "For Skopt model, refer to the respective evaluation metrics.")
-                
-                # Save processed DataFrame to session state for later use
+                # 🔹 Display evaluation info
+                if model_choice == "Optuna XGBoost":
+                    st.info("The Mean Absolute Percentage Error (MAPE) of the Optuna-tuned model is 9.22 %.") 
+                else:
+                    st.info("Refer to the Skopt model’s evaluation metrics (MAPE, R², RMSE) from your training logs.")
+
+                # Save processed DataFrame to session state
                 st.session_state["df_processed"] = df
 
         except Exception as e:
             st.error(f"Error processing file: {e}")
+
 
     
     # Graph Generation Section (accessible if processed DataFrame exists)
@@ -453,6 +479,7 @@ elif mode == "Multiple Data":
                 file_name="graph.png",
                 mime="image/png"
             )
+
 
 
 
