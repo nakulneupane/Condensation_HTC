@@ -329,7 +329,7 @@ elif mode == "Multiple Data":
             col_names = [
                 'G (kg/m2s)', 'x', 'Tsat (K)', 'rho_l', 'rho_v', 
                 'mu_l', 'mu_v', 'k_v', 'k_l', 'surface_tension', 
-                'Cp_v', 'Cp_l', 'Psat (Pa)', 'D (m)'
+                'Cp_v', 'Cp_l', 'Psat (Pa)', 'D (m)', 'Z'
             ]
             if uploaded_file.name.endswith('.csv'):
                 df = pd.read_csv(uploaded_file, header=None, skiprows=1, names=col_names)
@@ -357,10 +357,13 @@ elif mode == "Multiple Data":
                         'Cp_v': [row['Cp_v']],
                         'Cp_l': [row['Cp_l']],
                         'Psat (Pa)': [row['Psat (Pa)']],
-                        'D (m)': [row['D (m)']]
+                        'D (m)': [row['D (m)']],
+                        'Z': [row['Z']]
                     })
                     epsilon = 1e-10
-                    log_features = np.log(features + epsilon)
+                    log_cols = [col for col in features.columns if col not in ['x', 'Z']]
+                    log_features = features.copy()
+                    log_features[log_cols] = np.log(features[log_cols] + epsilon)
                     X_pca = pca.transform(log_features)
                     predicted_log_h = xgb_model.predict(X_pca)
                     predicted_h = np.exp(predicted_log_h)[0]
@@ -409,5 +412,6 @@ elif mode == "Multiple Data":
                 file_name="graph.png",
                 mime="image/png"
             )
+
 
 
