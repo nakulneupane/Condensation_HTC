@@ -195,62 +195,73 @@ elif mode == "Single Data Point":
     fluid1 = st.text_input("Enter primary fluid name (e.g., R1234ZE(E), R134a, etc.):", "R134a", key="fluid1")
     fluid2 = st.text_input("Enter secondary fluid name (or leave blank if none):", "", key="fluid2")
     mf1 = st.number_input("Enter mass fraction of fluid 1 (0 to 1):", min_value=0.0, max_value=1.0, value=1.0, step=0.01, key="mf1")
-    if fluid2:
-        mf2 = 1.0 - mf1
-    else:
-        mf2 = 0
+    mf2 = 1.0 - mf1 if fluid2 else 0.0
 
     # Section 2: Choose Method for Fluid Property Input
     st.subheader("2. Select Method for Fluid Properties")
     prop_method = st.radio("Choose how to provide fluid properties:",
                            ["Calculate using CoolProp", "Input manually"], key="prop_method")
     
-    # Flag to indicate if CoolProp calculations succeeded.
     prop_success = False
 
     if prop_method == "Calculate using CoolProp":
-        # Ask: Temperature or Pressure?
         temp_or_press = st.radio("Would you like to enter Temperature (T) or Pressure (P)?",
                                  ["T", "P"], key="temp_or_press")
-        # Ask for quality (for property calculation)
         quality_prop = st.number_input("Enter quality (x) for property calculation (0 for liquid, 1 for vapor):",
                                        min_value=0.0, max_value=1.0, value=0.50, step=0.01, key="quality_prop")
         if temp_or_press == "T":
             T_input = st.number_input("Enter Temperature (K):", value=313.0, format="%.2f", key="T_input_calc")
         else:
             P_input = st.number_input("Enter Pressure (Pa):", value=101325.0, format="%.2f", key="P_input_calc")
-        # Ask for Diameter and Mass Flux with unique keys
+        
         D = st.number_input("Enter diameter (m):", value=0.0050, format="%.4f", key="D_calc")
         G = st.number_input("Enter mass flux (G) in kg/m²s:", value=200.00, format="%.2f", key="G_calc")
         
         try:
+            # --- Calculate all properties and glide ---
             if temp_or_press == "T":
                 Psat = cool(fluid1, fluid2, mf1, mf2, 'P', 'T', T_input, 'Q', 0)
-                rho_l = cool(fluid1, fluid2, mf1, mf2, 'D', 'T', T_input, 'Q', 0)
-                rho_v = cool(fluid1, fluid2, mf1, mf2, 'D', 'T', T_input, 'Q', 1)
-                mu_l = cool(fluid1, fluid2, mf1, mf2, 'V', 'T', T_input, 'Q', 0)
-                mu_v = cool(fluid1, fluid2, mf1, mf2, 'V', 'T', T_input, 'Q', 1)
-                k_l = cool(fluid1, fluid2, mf1, mf2, 'L', 'T', T_input, 'Q', 0)
-                k_v = cool(fluid1, fluid2, mf1, mf2, 'L', 'T', T_input, 'Q', 1)
-                surface_tension = cool(fluid1, fluid2, mf1, mf2, 'I', 'T', T_input, 'Q', quality_prop)
-                Cp_l = cool(fluid1, fluid2, mf1, mf2, 'C', 'T', T_input, 'Q', 0)
-                Cp_v = cool(fluid1, fluid2, mf1, mf2, 'C', 'T', T_input, 'Q', 1)
             else:
-                T_input = cool(fluid1, fluid2, mf1, mf2, 'T', 'P', P_input, 'Q', 0)
                 Psat = P_input
-                rho_l = cool(fluid1, fluid2, mf1, mf2, 'D', 'T', T_input, 'Q', 0)
-                rho_v = cool(fluid1, fluid2, mf1, mf2, 'D', 'T', T_input, 'Q', 1)
-                mu_l = cool(fluid1, fluid2, mf1, mf2, 'V', 'T', T_input, 'Q', 0)
-                mu_v = cool(fluid1, fluid2, mf1, mf2, 'V', 'T', T_input, 'Q', 1)
-                k_l = cool(fluid1, fluid2, mf1, mf2, 'L', 'T', T_input, 'Q', 0)
-                k_v = cool(fluid1, fluid2, mf1, mf2, 'L', 'T', T_input, 'Q', 1)
-                surface_tension = cool(fluid1, fluid2, mf1, mf2, 'I', 'T', T_input, 'Q', quality_prop)
-                Cp_l = cool(fluid1, fluid2, mf1, mf2, 'C', 'T', T_input, 'Q', 0)
-                Cp_v = cool(fluid1, fluid2, mf1, mf2, 'C', 'T', T_input, 'Q', 1)
+
+            T_bubble = cool(fluid1, fluid2, mf1, mf2, 'T', 'P', Psat, 'Q', 0)
+            T_dew = cool(fluid1, fluid2, mf1, mf2, 'T', 'P', Psat, 'Q', 1)
+            glide = T_dew - T_bubble
+            T_ref = 0.5 * (T_bubble + T_dew)
+
+            rho_l = cool(fluid1, fluid2, mf1, mf2, 'D', 'T', T_ref, 'Q', 0)
+            rho_v = cool(fluid1, fluid2, mf1, mf2, 'D', 'T', T_ref, 'Q', 1)
+            mu_l = cool(fluid1, fluid2, mf1, mf2, 'V', 'T', T_ref, 'Q', 0)
+            mu_v = cool(fluid1, fluid2, mf1, mf2, 'V', 'T', T_ref, 'Q', 1)
+            k_l = cool(fluid1, fluid2, mf1, mf2, 'L', 'T', T_ref, 'Q', 0)
+            k_v = cool(fluid1, fluid2, mf1, mf2, 'L', 'T', T_ref, 'Q', 1)
+            surface_tension = cool(fluid1, fluid2, mf1, mf2, 'I', 'T', T_ref, 'Q', quality_prop)
+            Cp_l = cool(fluid1, fluid2, mf1, mf2, 'C', 'T', T_ref, 'Q', 0)
+            Cp_v = cool(fluid1, fluid2, mf1, mf2, 'C', 'T', T_ref, 'Q', 1)
+
+            h_l = cool(fluid1, fluid2, mf1, mf2, 'H', 'T', T_ref, 'Q', 0)
+            h_v = cool(fluid1, fluid2, mf1, mf2, 'H', 'T', T_ref, 'Q', 1)
+            h_lv = h_v - h_l
+
+            # --- Z parameter ---
+            x_i = quality_prop
+            Z = (x_i * Cp_v * glide) / h_lv if h_lv != 0 else 0.0
+            
+
             prop_success = True
+
+            # --- Display key computed values ---
+            st.success("✅ Thermodynamic properties successfully calculated using CoolProp.")
+            st.write(f"**Glide temperature:** {glide:.4f} K")
+            st.write(f"**Latent heat (h_lv):** {h_lv:.2f} J/kg")
+            st.write(f"**Z factor:** {Z:.6f}")
+            st.write(f"**Mass transfer resistance (R_m):** {R_m:.8f}")
+
         except Exception as e:
-            st.error("CoolProp failed to calculate properties. Please input properties manually.")
-    
+            st.error(f"CoolProp failed to calculate properties: {e}")
+            prop_success = False
+
+    # --- Manual input fallback ---
     if prop_method == "Input manually" or not prop_success:
         st.info("Please manually input the fluid properties:")
         T_input = st.number_input("Enter Saturation Temperature (Tsat) [K]:", value=313.0, format="%.2f", key="T_input_manual")
@@ -266,12 +277,8 @@ elif mode == "Single Data Point":
         Psat = st.number_input("Saturation Pressure (Psat) [Pa]:", value=101325.0, format="%.2f", key="Psat_manual")
         D = st.number_input("Enter diameter (m):", value=0.0050, format="%.4f", key="D_manual")
         G = st.number_input("Enter mass flux (G) in kg/m²s:", value=200.00, format="%.2f", key="G_manual")
-    
-    # Section 3: Quality input (if not already captured)
-    if prop_method == "Input manually" or not prop_success:
         x_val = st.number_input("Enter quality (x) (0 for liquid, 1 for vapor):", min_value=0.0, max_value=1.0, value=0.5, step=0.01, key="x_manual")
-    else:
-        x_val = quality_prop
+
 
     if st.button("Calculate Heat Transfer Coefficient (h)"):
         # Assemble feature DataFrame in the order:
@@ -292,7 +299,8 @@ elif mode == "Single Data Point":
             'Cp_v': [Cp_v],
             'Cp_l': [Cp_l],
             'Psat (Pa)': [Psat],
-            'D (m)': [diameter]
+            'D (m)': [diameter],
+            'Z': [Z],
         }
         input_data = pd.DataFrame(feature_dict)
         epsilon = 1e-10
@@ -356,9 +364,10 @@ elif mode == "Multiple Data":
                         'surface_tension': [row['surface_tension']],
                         'Cp_v': [row['Cp_v']],
                         'Cp_l': [row['Cp_l']],
+                        'Z': [row['Z']],
                         'Psat (Pa)': [row['Psat (Pa)']],
-                        'D (m)': [row['D (m)']],
-                        'Z': [row['Z']]
+                        'D (m)': [row['D (m)']]
+                        
                     })
                     epsilon = 1e-10
                     log_cols = [col for col in features.columns if col not in ['x', 'Z']]
@@ -412,6 +421,7 @@ elif mode == "Multiple Data":
                 file_name="graph.png",
                 mime="image/png"
             )
+
 
 
 
