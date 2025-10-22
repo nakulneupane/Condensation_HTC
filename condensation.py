@@ -156,7 +156,12 @@ def load_xgb_model():
     response = requests.get(xgb_url)
     response.raise_for_status()
     return joblib.load(BytesIO(response.content))
-
+@st.cache_resource
+def load_xgb_skopt_model():
+    xgb_skopt_url = "https://drive.google.com/file/d/1tusRISrkzphhZ6mLe_xydhAaWnZ3EkKz"
+    response = requests.get(xgb_skopt_url)
+    response.raise_for_status()
+    return joblib.load(BytesIO(response.content))
 @st.cache_resource
 def load_pca_model():
     pca_url = "https://drive.google.com/uc?export=download&id=1HHOaQgxUDbA6iPEAkQHh1gJvihz-MShn"
@@ -329,26 +334,42 @@ elif mode == "Multiple Data":
             "Density of vapor phase (kg/m^3), Dynamic viscosity of liquid phase (Ns/m^2), Dynamic viscosity of vapor phase (Ns/m^2), "
             "Thermal conductivity of vapor phase (W/m.K), Thermal conductivity of liquid phase (W/m.K), "
             "Surface Tension (N/m), Mass-specific constant pressure-specific heat of vapor phase (J/kg.K), "
-            "Mass-specific constant pressure-specific heat of liquid phase (J/kg.K), Saturation pressure (Pa), Diameter (m)")
-    
+            "Mass-specific constant pressure-specific heat of liquid phase (J/kg.K), Z parameter, Saturation pressure (Pa), Diameter (m)")
+
+    # 🔹 Model selection option
+    model_choice = st.selectbox(
+        "Select Machine Learning Model:",
+        ("Optuna XGBoost", "Skopt XGBoost")
+    )
+
     uploaded_file = st.file_uploader("Upload Excel or CSV file", type=["xlsx", "xls", "csv"])
+
     if uploaded_file is not None:
         try:
             col_names = [
-                'G (kg/m2s)', 'x', 'Tsat (K)', 'rho_l', 'rho_v', 
-                'mu_l', 'mu_v', 'k_v', 'k_l', 'surface_tension', 
-                'Cp_v', 'Cp_l', 'Z', 'Psat (Pa)', 'D (m)' 
+                'G (kg/m2s)', 'x', 'Tsat (K)', 'rho_l', 'rho_v',
+                'mu_l', 'mu_v', 'k_v', 'k_l', 'surface_tension',
+                'Cp_v', 'Cp_l', 'Z', 'Psat (Pa)', 'D (m)'
             ]
             if uploaded_file.name.endswith('.csv'):
                 df = pd.read_csv(uploaded_file, header=None, skiprows=1, names=col_names)
             else:
                 df = pd.read_excel(uploaded_file, engine='openpyxl', header=None, skiprows=1, names=col_names)
-            
+
             st.write("### Uploaded Data:")
             st.dataframe(df)
+
             if st.button("Process Multiple Data"):
                 pca = load_pca_model()
-                xgb_model = load_xgb_model()
+
+                # 🔹 Load selected model
+                if model_choice == "Optuna XGBoost":
+                    xgb_model = load_xgb_model()
+                    st.success("Using Optuna-tuned XGBoost model.")
+                else:
+                    xgb_model = load_xgb_skopt_model()
+                    st.success("Using Skopt-tuned XGBoost model.")
+
                 predicted_htc_list = []
                 for index, row in df.iterrows():
                     features = pd.DataFrame({
@@ -367,35 +388,44 @@ elif mode == "Multiple Data":
                         'Z': [row['Z']],
                         'Psat (Pa)': [row['Psat (Pa)']],
                         'D (m)': [row['D (m)']]
-                        
                     })
+
                     epsilon = 1e-10
                     log_cols = [col for col in features.columns if col not in ['x', 'Z']]
                     log_features = features.copy()
                     log_features[log_cols] = np.log(features[log_cols] + epsilon)
+
                     X_pca = pca.transform(log_features)
                     predicted_log_h = xgb_model.predict(X_pca)
                     predicted_h = np.exp(predicted_log_h)[0]
                     predicted_htc_list.append(predicted_h)
+
                 df['Predicted HTC (W/m²K)'] = predicted_htc_list
+
                 st.write("### Processed Data:")
                 st.dataframe(df)
+
                 output = BytesIO()
                 with pd.ExcelWriter(output, engine='openpyxl') as writer:
                     df.to_excel(writer, index=False, sheet_name='Results')
                 processed_data = output.getvalue()
+
                 st.download_button(
                     label="Download Processed Excel File",
                     data=processed_data,
                     file_name='processed_results.xlsx',
                     mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
                 )
-                st.info("The Mean Absolute Percentage Error of the model is 9.22 %")
+
+                st.info("The Mean Absolute Percentage Error of the Optuna model is 9.22 %. "
+                        "For Skopt model, refer to the respective evaluation metrics.")
+                
                 # Save processed DataFrame to session state for later use
                 st.session_state["df_processed"] = df
-                
+
         except Exception as e:
             st.error(f"Error processing file: {e}")
+
     
     # Graph Generation Section (accessible if processed DataFrame exists)
     if "df_processed" in st.session_state:
@@ -421,6 +451,7 @@ elif mode == "Multiple Data":
                 file_name="graph.png",
                 mime="image/png"
             )
+
 
 
 
