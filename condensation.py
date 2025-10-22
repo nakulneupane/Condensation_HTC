@@ -331,25 +331,31 @@ elif mode == "Single Data Point":
 
 elif mode == "Multiple Data":
     st.header("Multiple Data Processing")
-    st.info("Ensure your file includes all required fluid properties in the following order:\n"
-            "Mass Flux (kg/m^2.s), Quality (x), Saturation Temperature (K), Density of liquid phase (kg/m^3), "
-            "Density of vapor phase (kg/m^3), Dynamic viscosity of liquid phase (Ns/m^2), Dynamic viscosity of vapor phase (Ns/m^2), "
-            "Thermal conductivity of vapor phase (W/m.K), Thermal conductivity of liquid phase (W/m.K), "
-            "Surface Tension (N/m), Mass-specific constant pressure-specific heat of vapor phase (J/kg.K), "
-            "Mass-specific constant pressure-specific heat of liquid phase (J/kg.K), Z parameter, Saturation pressure (Pa), Diameter (m)")
+    st.info("""
+    Ensure your file includes all required fluid properties in the following order:
+    Mass Flux (kg/m².s), Quality (x), Saturation Temperature (K), Density of liquid phase (kg/m³),
+    Density of vapor phase (kg/m³), Dynamic viscosity of liquid phase (Ns/m²), Dynamic viscosity of vapor phase (Ns/m²),
+    Thermal conductivity of vapor phase (W/m.K), Thermal conductivity of liquid phase (W/m.K),
+    Surface Tension (N/m), Cp_v (J/kg.K), Cp_l (J/kg.K), Z parameter, Saturation pressure (Pa), Diameter (m)
+    """)
 
-    # 🔹 Model selection option
-    model_choice = st.selectbox(
-        "Select Machine Learning Model:",
-        ("Optuna XGBoost", "Skopt XGBoost")
-    )
-
-    # 🔹 PCA usage option
+    # 🔹 Ask if PCA should be used
     use_pca = st.radio(
-        "Would you like to use PCA for feature transformation?",
-        ("Yes", "No"),
-        index=0
+        "Do you want to use PCA-transformed features?",
+        ("Yes, use PCA (7 features)", "No, use all 15 features")
     )
+
+    # 🔹 Model selection based on PCA choice
+    if use_pca == "Yes, use PCA (7 features)":
+        model_choice = st.selectbox(
+            "Select PCA-based Machine Learning Model:",
+            ("Optuna XGBoost (PCA)", "Skopt XGBoost (PCA)")
+        )
+    else:
+        model_choice = st.selectbox(
+            "Select Non-PCA Machine Learning Model:",
+            ("Optuna XGBoost (Full)", "Skopt XGBoost (Full)")
+        )
 
     uploaded_file = st.file_uploader("Upload Excel or CSV file", type=["xlsx", "xls", "csv"])
 
@@ -369,66 +375,47 @@ elif mode == "Multiple Data":
             st.dataframe(df)
 
             if st.button("Process Multiple Data"):
-                # 🔹 Load selected model
-                if model_choice == "Optuna XGBoost":
-                    xgb_model = load_xgb_model()
-                    st.success("Using Optuna-tuned XGBoost model.")
-                else:
-                    xgb_model = load_xgb_skopt_model()
-                    st.success("Using Skopt-tuned XGBoost model.")
+                epsilon = 1e-10
+                log_cols = [col for col in df.columns if col not in ['x', 'Z']]
 
-                # 🔹 Load PCA if user wants it
-                if use_pca == "Yes":
-                    pca = load_pca_model()
-                    st.info("PCA transformation will be applied to the input data.")
-                else:
-                    pca = None
-                    st.info("PCA transformation will be skipped — raw (log-transformed) features will be used.")
+                # 🔹 Apply log transform only to selected columns
+                df_log = df.copy()
+                df_log[log_cols] = np.log(df[log_cols] + epsilon)
 
                 predicted_htc_list = []
 
-                for _, row in df.iterrows():
-                    features = pd.DataFrame({
-                        'G (kg/m2s)': [row['G (kg/m2s)']],
-                        'x': [row['x']],
-                        'Tsat (K)': [row['Tsat (K)']],
-                        'rho_l': [row['rho_l']],
-                        'rho_v': [row['rho_v']],
-                        'mu_l': [row['mu_l']],
-                        'mu_v': [row['mu_v']],
-                        'k_v': [row['k_v']],
-                        'k_l': [row['k_l']],
-                        'surface_tension': [row['surface_tension']],
-                        'Cp_v': [row['Cp_v']],
-                        'Cp_l': [row['Cp_l']],
-                        'Z': [row['Z']],
-                        'Psat (Pa)': [row['Psat (Pa)']],
-                        'D (m)': [row['D (m)']]
-                    })
+                # 🔹 PCA branch
+                if use_pca == "Yes, use PCA (7 features)":
+                    pca = load_pca_model()
 
-                    # 🔹 Apply log transform (excluding x and Z)
-                    epsilon = 1e-10
-                    log_cols = [col for col in features.columns if col not in ['x', 'Z']]
-                    log_features = features.copy()
-                    log_features[log_cols] = np.log(features[log_cols] + epsilon)
-
-                    # 🔹 Apply PCA (if selected)
-                    if pca is not None:
-                        X_input = pca.transform(log_features)
+                    if "Optuna" in model_choice:
+                        xgb_model = load_xgb_model()
+                        st.success("Using Optuna-tuned PCA-based XGBoost model.")
                     else:
-                        X_input = log_features.values  # use directly without PCA
+                        xgb_model = load_xgb_skopt_model()
+                        st.success("Using Skopt-tuned PCA-based XGBoost model.")
 
-                    # 🔹 Predict
-                    predicted_log_h = xgb_model.predict(X_input)
-                    predicted_h = float(np.exp(predicted_log_h).flatten()[0])
-                    predicted_htc_list.append(predicted_h)
+                    X_pca = pca.transform(df_log)
+                    predicted_log_h = xgb_model.predict(X_pca)
+                    predicted_htc_list = np.exp(predicted_log_h)
+
+                # 🔹 Non-PCA branch
+                else:
+                    if "Optuna" in model_choice:
+                        xgb_model = load_xgb_model_full()
+                        st.success("Using Optuna-tuned full-feature XGBoost model.")
+                    else:
+                        xgb_model = load_xgb_skopt_model_full()
+                        st.success("Using Skopt-tuned full-feature XGBoost model.")
+
+                    predicted_log_h = xgb_model.predict(df_log)
+                    predicted_htc_list = np.exp(predicted_log_h)
 
                 df['Predicted HTC (W/m²K)'] = predicted_htc_list
 
                 st.write("### Processed Data:")
                 st.dataframe(df)
 
-                # 🔹 Download processed results
                 output = BytesIO()
                 with pd.ExcelWriter(output, engine='openpyxl') as writer:
                     df.to_excel(writer, index=False, sheet_name='Results')
@@ -441,17 +428,12 @@ elif mode == "Multiple Data":
                     mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
                 )
 
-                # 🔹 Display evaluation info
-                if model_choice == "Optuna XGBoost":
-                    st.info("The Mean Absolute Percentage Error (MAPE) of the Optuna-tuned model is 9.22 %.") 
-                else:
-                    st.info("Refer to the Skopt model’s evaluation metrics (MAPE, R², RMSE) from your training logs.")
-
-                # Save processed DataFrame to session state
+                st.info("✅ Processing complete. Check above for model metrics and download results.")
                 st.session_state["df_processed"] = df
 
         except Exception as e:
             st.error(f"Error processing file: {e}")
+
 
 
     
@@ -479,6 +461,7 @@ elif mode == "Multiple Data":
                 file_name="graph.png",
                 mime="image/png"
             )
+
 
 
 
