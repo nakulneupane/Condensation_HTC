@@ -165,6 +165,13 @@ def load_xgb_skopt_model():
     return joblib.load(BytesIO(response.content))
 
 @st.cache_resource
+def load_skopt_model_nopca():
+    xgb_skopt_url = "https://drive.google.com/uc?export=download&id=1zZKxidAOY5UKD19UxFi4HSOTqfFQjh4a"
+    response = requests.get(xgb_skopt_url)
+    response.raise_for_status()
+    return joblib.load(BytesIO(response.content))
+    
+@st.cache_resource
 def load_pca_model():
     pca_url = "https://drive.google.com/uc?export=download&id=1HHOaQgxUDbA6iPEAkQHh1gJvihz-MShn"
     response = requests.get(pca_url)
@@ -402,10 +409,10 @@ elif mode == "Multiple Data":
                 # 🔹 Non-PCA branch
                 else:
                     if "Optuna" in model_choice:
-                        xgb_model = load_xgb_model_full()
-                        st.success("Using Optuna-tuned full-feature XGBoost model.")
+                        xgb_model = load_optuna_model_nopca()
+                        st.success("Using Optuna full-feature XGBoost model.")
                     else:
-                        xgb_model = load_xgb_skopt_model_full()
+                        xgb_model = load_skopt_model_nopca()
                         st.success("Using Skopt-tuned full-feature XGBoost model.")
 
                     predicted_log_h = xgb_model.predict(df_log)
@@ -461,6 +468,7 @@ elif mode == "Multiple Data":
                 file_name="graph.png",
                 mime="image/png"
             )
+
 
 
 
