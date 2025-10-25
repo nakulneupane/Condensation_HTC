@@ -159,7 +159,7 @@ def load_xgb_model():
     
 @st.cache_resource
 def load_xgb_skopt_model():
-    xgb_skopt_url = "https://drive.google.com/uc?export=download&id=1tusRISrkzphhZ6mLe_xydhAaWnZ3EkKz"
+    xgb_skopt_url = "https://drive.google.com/uc?export=download&id=1Zhv11sFtx0-Ww4gx3Z4xQiUgZHFIbVDH"
     response = requests.get(xgb_skopt_url)
     response.raise_for_status()
     return joblib.load(BytesIO(response.content))
@@ -468,6 +468,7 @@ elif mode == "Multiple Data":
                 file_name="graph.png",
                 mime="image/png"
             )
+
 
 
 
