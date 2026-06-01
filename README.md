@@ -117,7 +117,7 @@ The input file must include 14 columns in the following order:
 
 ---
 
-## 🛠 Technologies Used
+## Technologies Used
 
 | Component        | Tool/Library                  |
 | ---------------- | ----------------------------- |
