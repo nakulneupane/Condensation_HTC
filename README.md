@@ -2,7 +2,7 @@
 
 # 📘 Condensation Heat Transfer Coefficient Predictor
 
-### Powered by XGBoost, PCA, CoolProp, and Gemini AI
+### XGBoost, PCA, CoolProp, and Gemini AI
 
 ---
 
