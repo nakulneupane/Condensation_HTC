@@ -41,9 +41,9 @@ The **Condensation Heat Transfer Coefficient Predictor** is an interactive web a
 
 ---
 
-## 📌 Model Training & Validity
+## Model Training & Validity
 
-### 🔍 Validity Info
+### Validity Info
 
 The XGBoost model was trained on data with the following ranges:
 
@@ -53,13 +53,13 @@ The XGBoost model was trained on data with the following ranges:
 * **Inner Tube Diameter:** 0.49–20 mm
 * **Refrigerants Supported:** 35+ types including R134a, R1234YF, R744, R717, binary blends like R290/R170, and more.
 
-### 🧪 Accuracy
+### Accuracy
 
 * **MAPE (Mean Absolute Percentage Error):** \~9.22%
 
 ---
 
-## 🚀 How to Use the App
+## How to Use the App
 
 ### 🔹 Initial Setup
 
