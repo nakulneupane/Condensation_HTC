@@ -18,35 +18,26 @@ The **Condensation Heat Transfer Coefficient Predictor** is an interactive web a
 
 ---
 
-## 🧠 Core Features
+## Core Features
 
-### ✅ 1. HTC Prediction (Single & Multiple Data Points)
+### 1. HTC Prediction (Single & Multiple Data Points)
 
 * Predicts the HTC using a trained XGBoost model with PCA for dimensionality reduction.
 * Offers **manual input** or **automatic property calculation** (via CoolProp).
 
-### ✅ 2. Fluid Property Handling
+### 2. Fluid Property Handling
 
 * Calculate key properties like density, viscosity, thermal conductivity, surface tension, etc.
 * Supports **binary mixtures** with mass fractions using CoolProp’s `HEOS` backend.
 
-### ✅ 3. Batch Processing (Multiple Data Mode)
+### 3. Batch Processing (Multiple Data Mode)
 
 * Upload Excel or CSV files for HTC prediction over multiple data entries.
 * Returns a downloadable Excel file with HTC predictions appended.
 
-### ✅ 4. Visualization
+### 4. Visualization
 
 * Generate and download **scatter plots** based on predicted or uploaded data.
-
-### ✅ 5. AI Assistant (Optional)
-
-* Powered by **Google Gemini** (`gemini-2.0-flash` model).
-* Users can ask questions related to condensation or thermophysical concepts.
-
-### ✅ 6. Dynamic Theming
-
-* Light/Dark mode toggle for improved user experience.
 
 ---
 
