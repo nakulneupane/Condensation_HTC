@@ -64,11 +64,6 @@ The XGBoost model was trained on data with the following ranges:
 ### 🔹 Initial Setup
 
 1. Deploy the app locally or via **Streamlit Cloud**.
-2. Add your **Google Gemini API key** to `.streamlit/secrets.toml` like so:
-
-   ```toml
-   GEMINI_API_KEY = "your_google_api_key_here"
-   ```
 
 ### 🔹 Launch Modes
 
@@ -85,7 +80,7 @@ The XGBoost model was trained on data with the following ranges:
 
 ---
 
-## 📁 Input Requirements
+##  Input Requirements
 
 ### For Multiple Data Upload:
 
@@ -108,7 +103,7 @@ The input file must include 14 columns in the following order:
 
 ---
 
-## 📤 Outputs
+##  Outputs
 
 ### Single Mode
 
@@ -135,15 +130,13 @@ The input file must include 14 columns in the following order:
 
 ---
 
-## 🔐 Security & API Usage
+##  Security
 
-* The app uses a **secure API key** stored in `.streamlit/secrets.toml`.
-* Google Gemini API is only initialized when the key is valid.
 * User-uploaded data is processed in-memory and not stored permanently.
 
 ---
 
-## ⚠️ Limitations
+## Limitations
 
 * The model is **only valid within the training data bounds**.
 * Gemini AI usage may incur **API quota limits** or require a Google Cloud account.
@@ -151,7 +144,7 @@ The input file must include 14 columns in the following order:
 
 ---
 
-## 📬 Support & Contact
+## Support & Contact
 
 If you encounter issues or have questions, contact the developer at:
 
