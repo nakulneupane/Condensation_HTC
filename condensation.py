@@ -162,7 +162,7 @@ elif mode == "Single Data Point":
             prop_success = True
 
             # --- Display key computed values ---
-            st.success("Thermodynamic properties successfully calculated using CoolProp.")
+            st.success("✅ Thermodynamic properties successfully calculated using CoolProp.")
             st.write(f"**Glide temperature:** {glide:.4f} K")
             st.write(f"**Latent heat (h_lv):** {h_lv:.2f} J/kg")
             st.write(f"**Z factor:** {Z:.6f}")
@@ -209,40 +209,60 @@ elif mode == "Single Data Point":
         st.write(f"**Z Factor:** {Z:.6f}")
 
     if st.button("Calculate Heat Transfer Coefficient (h)"):
-        # Assemble feature DataFrame in the order required by the model
-        feature_dict = {
-            'G (kg/m2s)': [G],
-            'x': [x_val],
-            'Tsat (K)': [T_input],
-            'rho_l': [rho_l],
-            'rho_v': [rho_v],
-            'mu_l': [mu_l],
-            'mu_v': [mu_v],
-            'k_v': [k_v],
-            'k_l': [k_l],
-            'surface_tension': [surface_tension],
-            'Cp_v': [Cp_v],
-            'Cp_l': [Cp_l],
-            'Psat (Pa)': [Psat],
-            'D (m)': [D],
-            'Z': [Z],
-        }
-        input_data = pd.DataFrame(feature_dict)
+        # Assemble feature array in the exact order expected by the PCA model
+        # Convert to numpy array and reshape for PCA
+        feature_array = np.array([[
+            G, x_val, T_input, rho_l, rho_v, mu_l, mu_v, k_v, k_l, 
+            surface_tension, Cp_v, Cp_l, Psat, D, Z
+        ]])
+        
+        # Create DataFrame with proper column names if needed, or just use numpy array
+        # PCA might expect a specific format, so let's try both approaches
         
         epsilon = 1e-10
-        log_transformed_data = np.log(input_data + epsilon)
+        log_transformed_data = np.log(feature_array + epsilon)
         
-        pca = load_pca_model()
-        xgb_model = load_xgb_skopt_model()
-        
-        X_pca = pca.transform(log_transformed_data)
-        predicted_log_h = xgb_model.predict(X_pca)
-        predicted_h = np.exp(predicted_log_h)
-        
-        st.write("### Fluid Properties Used")
-        st.dataframe(input_data)
-        st.write(f"### <span style='color:blue;'>The predicted heat transfer coefficient is: **{predicted_h[0]:.4f} W/m²K**</span>", unsafe_allow_html=True)
-        st.info("The Mean Absolute Percentage Error of the model is 9.22 %")
+        try:
+            pca = load_pca_model()
+            xgb_model = load_xgb_skopt_model()
+            
+            # Try with numpy array first (most compatible)
+            X_pca = pca.transform(log_transformed_data)
+            predicted_log_h = xgb_model.predict(X_pca)
+            predicted_h = np.exp(predicted_log_h)
+            
+            # Display input data for user reference
+            input_df = pd.DataFrame([{
+                'G (kg/m2s)': G, 'x': x_val, 'Tsat (K)': T_input, 'rho_l': rho_l, 
+                'rho_v': rho_v, 'mu_l': mu_l, 'mu_v': mu_v, 'k_v': k_v, 'k_l': k_l,
+                'surface_tension': surface_tension, 'Cp_v': Cp_v, 'Cp_l': Cp_l, 
+                'Psat (Pa)': Psat, 'D (m)': D, 'Z': Z
+            }])
+            
+            st.write("### Fluid Properties Used")
+            st.dataframe(input_df)
+            st.write(f"### <span style='color:blue;'>The predicted heat transfer coefficient is: **{predicted_h[0]:.4f} W/m²K**</span>", unsafe_allow_html=True)
+            st.info("The Mean Absolute Percentage Error of the model is 9.22 %")
+            
+        except Exception as e:
+            st.error(f"Error during prediction: {str(e)}")
+            st.info("Trying alternative data format...")
+            
+            # Alternative approach: Try with DataFrame
+            try:
+                feature_df = pd.DataFrame(feature_array, columns=[
+                    'G', 'x', 'Tsat', 'rho_l', 'rho_v', 'mu_l', 'mu_v', 'k_v', 'k_l',
+                    'surface_tension', 'Cp_v', 'Cp_l', 'Psat', 'D', 'Z'
+                ])
+                log_transformed_df = np.log(feature_df + epsilon)
+                X_pca = pca.transform(log_transformed_df)
+                predicted_log_h = xgb_model.predict(X_pca)
+                predicted_h = np.exp(predicted_log_h)
+                
+                st.write(f"### <span style='color:blue;'>The predicted heat transfer coefficient is: **{predicted_h[0]:.4f} W/m²K**</span>", unsafe_allow_html=True)
+                st.info("The Mean Absolute Percentage Error of the model is 9.22 %")
+            except Exception as e2:
+                st.error(f"Both prediction attempts failed. Error: {str(e2)}")
 
 # ---------------------------
 # Multiple Data Mode
@@ -262,9 +282,9 @@ elif mode == "Multiple Data":
     if uploaded_file is not None:
         try:
             col_names = [
-                'G (kg/m2s)', 'x', 'Tsat (K)', 'rho_l', 'rho_v',
+                'G', 'x', 'Tsat', 'rho_l', 'rho_v',
                 'mu_l', 'mu_v', 'k_v', 'k_l', 'surface_tension',
-                'Cp_v', 'Cp_l', 'Z', 'Psat (Pa)', 'D (m)'
+                'Cp_v', 'Cp_l', 'Z', 'Psat', 'D'
             ]
             if uploaded_file.name.endswith('.csv'):
                 df = pd.read_csv(uploaded_file, header=None, skiprows=1, names=col_names)
@@ -276,17 +296,19 @@ elif mode == "Multiple Data":
 
             if st.button("Process Multiple Data"):
                 epsilon = 1e-10
-                # Apply log transform to all columns except 'x' and 'Z'
-                log_cols = [col for col in df.columns if col not in ['x', 'Z']]
-                df_log = df.copy()
-                df_log[log_cols] = np.log(df[log_cols] + epsilon)
+                # Get the feature columns (all columns)
+                feature_cols = df.columns.tolist()
+                
+                # Convert to numpy array and apply log transform
+                feature_array = df[feature_cols].values
+                log_transformed_data = np.log(feature_array + epsilon)
 
                 # Load PCA and XGBoost (skopt) models
                 pca = load_pca_model()
                 xgb_model = load_xgb_skopt_model()
                 
-                # Transform using PCA
-                X_pca = pca.transform(df_log)
+                # Transform using PCA (use numpy array directly)
+                X_pca = pca.transform(log_transformed_data)
                 predicted_log_h = xgb_model.predict(X_pca)
                 predicted_htc = np.exp(predicted_log_h)
                 
@@ -307,7 +329,7 @@ elif mode == "Multiple Data":
                     mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
                 )
 
-                st.info("Processing complete. Check above for model metrics and download results.")
+                st.info("✅ Processing complete. Check above for model metrics and download results.")
                 st.session_state["df_processed"] = df
 
         except Exception as e:
