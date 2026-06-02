@@ -55,7 +55,8 @@ def load_xgb_skopt_model():
     xgb_skopt_url = "https://drive.google.com/uc?export=download&id=1Zhv11sFtx0-Ww4gx3Z4xQiUgZHFIbVDH"
     response = requests.get(xgb_skopt_url)
     response.raise_for_status()
-    return joblib.load(BytesIO(response.content))
+    model = joblib.load(BytesIO(response.content))
+    return model
 
 @st.cache_resource
 def load_pca_model():
@@ -63,7 +64,8 @@ def load_pca_model():
     pca_url = "https://drive.google.com/uc?export=download&id=1HHOaQgxUDbA6iPEAkQHh1gJvihz-MShn"
     response = requests.get(pca_url)
     response.raise_for_status()
-    return joblib.load(BytesIO(response.content))
+    pca = joblib.load(BytesIO(response.content))
+    return pca
 
 # Mode Selection
 if 'mode' not in st.session_state:
@@ -191,54 +193,64 @@ elif mode == "Single Data Point":
         st.write(f"**Z Factor:** {Z:.6f}")
 
     if st.button("Calculate Heat Transfer Coefficient (h)"):
-        feature_array = np.array([[
+        # Define the exact feature names in the order expected by the model
+        feature_names = ['G', 'x', 'Tsat', 'rho_l', 'rho_v', 'mu_l', 'mu_v', 'k_v', 'k_l', 
+                        'surface_tension', 'Cp_v', 'Cp_l', 'Psat', 'D', 'Z']
+        
+        # Create array with values
+        feature_values = np.array([[
             G, x_val, T_input, rho_l, rho_v, mu_l, mu_v, k_v, k_l, 
             surface_tension, Cp_v, Cp_l, Psat, D, Z
         ]])
-
         
+        # Apply log transform (add epsilon to avoid log(0))
         epsilon = 1e-10
-        log_transformed_data = np.log(feature_array + epsilon)
+        log_transformed_data = np.log(feature_values + epsilon)
+        
+        # Create DataFrame with proper column names
+        feature_df = pd.DataFrame(log_transformed_data, columns=feature_names)
         
         try:
+            # Load models
             pca = load_pca_model()
             xgb_model = load_xgb_skopt_model()
             
-            X_pca = pca.transform(log_transformed_data)
+            # Debug: Print PCA info
+            st.write("### Debug Information")
+            st.write(f"PCA n_components: {pca.n_components_}")
+            st.write(f"Input features shape: {feature_df.shape}")
+            st.write(f"Input feature names: {list(feature_df.columns)}")
+            
+            # Apply PCA transformation
+            X_pca = pca.transform(feature_df)
+            st.write(f"PCA transformed shape: {X_pca.shape}")
+            st.write(f"PCA transformed first row: {X_pca[0]}")
+            
+            # Make prediction
             predicted_log_h = xgb_model.predict(X_pca)
+            st.write(f"Predicted log(h): {predicted_log_h[0]}")
+            
             predicted_h = np.exp(predicted_log_h)
             
             # Display input data
             input_df = pd.DataFrame([{
                 'G (kg/m2s)': G, 'x': x_val, 'Tsat (K)': T_input, 'rho_l': rho_l, 
                 'rho_v': rho_v, 'mu_l': mu_l, 'mu_v': mu_v, 'k_v': k_v, 'k_l': k_l,
-                'surface_tension': surface_tension, 'Cp_v': Cp_v, 'Cp_l': Cp_l, 
+                'surface_tension (N/m)': surface_tension, 'Cp_v (J/kgK)': Cp_v, 'Cp_l (J/kgK)': Cp_l, 
                 'Psat (Pa)': Psat, 'D (m)': D, 'Z': Z
             }])
             
             st.write("### Fluid Properties Used")
             st.dataframe(input_df)
+            
             st.write(f"### <span style='color:blue;'>The predicted heat transfer coefficient is: **{predicted_h[0]:.4f} W/m²K**</span>", unsafe_allow_html=True)
             st.info("The Mean Absolute Percentage Error of the model is 9.22 %")
             
         except Exception as e:
             st.error(f"Error during prediction: {str(e)}")
-            st.info("Trying alternative data format...")
-            
-            try:
-                feature_df = pd.DataFrame(feature_array, columns=[
-                    'G', 'x', 'Tsat', 'rho_l', 'rho_v', 'mu_l', 'mu_v', 'k_v', 'k_l',
-                    'surface_tension', 'Cp_v', 'Cp_l', 'Psat', 'D', 'Z'
-                ])
-                log_transformed_df = np.log(feature_df + epsilon)
-                X_pca = pca.transform(log_transformed_df)
-                predicted_log_h = xgb_model.predict(X_pca)
-                predicted_h = np.exp(predicted_log_h)
-                
-                st.write(f"### <span style='color:blue;'>The predicted heat transfer coefficient is: **{predicted_h[0]:.4f} W/m²K**</span>", unsafe_allow_html=True)
-                st.info("The Mean Absolute Percentage Error of the model is 9.22 %")
-            except Exception as e2:
-                st.error(f"Both prediction attempts failed. Error: {str(e2)}")
+            st.error(f"Error type: {type(e).__name__}")
+            import traceback
+            st.code(traceback.format_exc())
 
 # Multiple Data Mode
 elif mode == "Multiple Data":
@@ -265,31 +277,43 @@ elif mode == "Multiple Data":
             else:
                 df = pd.read_excel(uploaded_file, engine='openpyxl', header=None, skiprows=1, names=col_names)
 
-            st.write("### Uploaded Data:")
-            st.dataframe(df)
+            st.write("### Uploaded Data (first 5 rows):")
+            st.dataframe(df.head())
+            st.write(f"Data shape: {df.shape}")
 
             if st.button("Process Multiple Data"):
                 epsilon = 1e-10
-                # Get feature columns 
-                feature_cols = df.columns.tolist()
                 
-                # apply log transform
-                feature_array = df[feature_cols].values
-                log_transformed_data = np.log(feature_array + epsilon)
-
-                # Load PCA and XGBoost (skopt) models
+                # Apply log transform to all numeric columns
+                df_log = df.copy()
+                for col in df_log.columns:
+                    if df_log[col].dtype in ['float64', 'int64']:
+                        df_log[col] = np.log(df_log[col] + epsilon)
+                
+                # Load PCA and XGBoost models
                 pca = load_pca_model()
                 xgb_model = load_xgb_skopt_model()
                 
+                # Debug info
+                st.write("### Debug Information")
+                st.write(f"PCA n_components: {pca.n_components_}")
+                st.write(f"Input features shape: {df_log.shape}")
+                
                 # Transform using PCA
-                X_pca = pca.transform(log_transformed_data)
+                X_pca = pca.transform(df_log)
+                st.write(f"PCA transformed shape: {X_pca.shape}")
+                
+                # Make predictions
                 predicted_log_h = xgb_model.predict(X_pca)
                 predicted_htc = np.exp(predicted_log_h)
                 
+                # Check if predictions vary
+                st.write(f"Prediction statistics - Min: {predicted_htc.min():.2f}, Max: {predicted_htc.max():.2f}, Std: {predicted_htc.std():.2f}")
+                
                 df['Predicted HTC (W/m²K)'] = predicted_htc
 
-                st.write("### Processed Data:")
-                st.dataframe(df)
+                st.write("### Processed Data (first 5 rows):")
+                st.dataframe(df.head())
 
                 output = BytesIO()
                 with pd.ExcelWriter(output, engine='openpyxl') as writer:
@@ -303,11 +327,13 @@ elif mode == "Multiple Data":
                     mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
                 )
 
-                st.info("Processing complete. Check above for model metrics and download results.")
+                st.info("Processing complete. Check debug information above.")
                 st.session_state["df_processed"] = df
 
         except Exception as e:
             st.error(f"Error processing file: {e}")
+            import traceback
+            st.code(traceback.format_exc())
 
     # Graph Generation 
     if "df_processed" in st.session_state:
