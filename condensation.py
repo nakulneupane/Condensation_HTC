@@ -193,11 +193,13 @@ elif mode == "Single Data Point":
         st.write(f"**Z Factor:** {Z:.6f}")
 
     if st.button("Calculate Heat Transfer Coefficient (h)"):
-        # Define the exact feature names in the order expected by the model
-        feature_names = ['G', 'x', 'Tsat', 'rho_l', 'rho_v', 'mu_l', 'mu_v', 'k_v', 'k_l', 
-                        'surface_tension', 'Cp_v', 'Cp_l', 'Psat', 'D', 'Z']
+        # Use the EXACT feature names that the PCA model expects (with units in parentheses)
+        feature_names = [
+            'G (kg/m2s)', 'x', 'Tsat (K)', 'rho_l', 'rho_v', 'mu_l', 'mu_v', 
+            'k_v', 'k_l', 'surface_tension', 'Cp_v', 'Cp_l', 'Psat (Pa)', 'D (m)', 'Z'
+        ]
         
-        # Create array with values
+        # Create array with values in the exact same order
         feature_values = np.array([[
             G, x_val, T_input, rho_l, rho_v, mu_l, mu_v, k_v, k_l, 
             surface_tension, Cp_v, Cp_l, Psat, D, Z
@@ -207,7 +209,7 @@ elif mode == "Single Data Point":
         epsilon = 1e-10
         log_transformed_data = np.log(feature_values + epsilon)
         
-        # Create DataFrame with proper column names
+        # Create DataFrame with exact column names expected by PCA
         feature_df = pd.DataFrame(log_transformed_data, columns=feature_names)
         
         try:
@@ -215,21 +217,11 @@ elif mode == "Single Data Point":
             pca = load_pca_model()
             xgb_model = load_xgb_skopt_model()
             
-            # Debug: Print PCA info
-            st.write("### Debug Information")
-            st.write(f"PCA n_components: {pca.n_components_}")
-            st.write(f"Input features shape: {feature_df.shape}")
-            st.write(f"Input feature names: {list(feature_df.columns)}")
-            
             # Apply PCA transformation
             X_pca = pca.transform(feature_df)
-            st.write(f"PCA transformed shape: {X_pca.shape}")
-            st.write(f"PCA transformed first row: {X_pca[0]}")
             
             # Make prediction
             predicted_log_h = xgb_model.predict(X_pca)
-            st.write(f"Predicted log(h): {predicted_log_h[0]}")
-            
             predicted_h = np.exp(predicted_log_h)
             
             # Display input data
@@ -248,7 +240,6 @@ elif mode == "Single Data Point":
             
         except Exception as e:
             st.error(f"Error during prediction: {str(e)}")
-            st.error(f"Error type: {type(e).__name__}")
             import traceback
             st.code(traceback.format_exc())
 
@@ -267,11 +258,13 @@ elif mode == "Multiple Data":
 
     if uploaded_file is not None:
         try:
+            # Use exact column names with units as expected by PCA
             col_names = [
-                'G', 'x', 'Tsat', 'rho_l', 'rho_v',
+                'G (kg/m2s)', 'x', 'Tsat (K)', 'rho_l', 'rho_v',
                 'mu_l', 'mu_v', 'k_v', 'k_l', 'surface_tension',
-                'Cp_v', 'Cp_l', 'Z', 'Psat', 'D'
+                'Cp_v', 'Cp_l', 'Z', 'Psat (Pa)', 'D (m)'
             ]
+            
             if uploaded_file.name.endswith('.csv'):
                 df = pd.read_csv(uploaded_file, header=None, skiprows=1, names=col_names)
             else:
@@ -284,7 +277,7 @@ elif mode == "Multiple Data":
             if st.button("Process Multiple Data"):
                 epsilon = 1e-10
                 
-                # Apply log transform to all numeric columns
+                # Apply log transform to all columns except 'x' and 'Z' (but keep them for now)
                 df_log = df.copy()
                 for col in df_log.columns:
                     if df_log[col].dtype in ['float64', 'int64']:
@@ -294,27 +287,27 @@ elif mode == "Multiple Data":
                 pca = load_pca_model()
                 xgb_model = load_xgb_skopt_model()
                 
-                # Debug info
-                st.write("### Debug Information")
-                st.write(f"PCA n_components: {pca.n_components_}")
-                st.write(f"Input features shape: {df_log.shape}")
-                
                 # Transform using PCA
                 X_pca = pca.transform(df_log)
-                st.write(f"PCA transformed shape: {X_pca.shape}")
                 
                 # Make predictions
                 predicted_log_h = xgb_model.predict(X_pca)
                 predicted_htc = np.exp(predicted_log_h)
                 
-                # Check if predictions vary
-                st.write(f"Prediction statistics - Min: {predicted_htc.min():.2f}, Max: {predicted_htc.max():.2f}, Std: {predicted_htc.std():.2f}")
-                
+                # Add predictions to original dataframe
                 df['Predicted HTC (W/m²K)'] = predicted_htc
 
                 st.write("### Processed Data (first 5 rows):")
                 st.dataframe(df.head())
+                
+                # Show prediction statistics
+                st.write(f"**Prediction Statistics:**")
+                st.write(f"Min: {predicted_htc.min():.2f} W/m²K")
+                st.write(f"Max: {predicted_htc.max():.2f} W/m²K")
+                st.write(f"Mean: {predicted_htc.mean():.2f} W/m²K")
+                st.write(f"Std: {predicted_htc.std():.2f} W/m²K")
 
+                # Provide download option
                 output = BytesIO()
                 with pd.ExcelWriter(output, engine='openpyxl') as writer:
                     df.to_excel(writer, index=False, sheet_name='Results')
@@ -327,7 +320,7 @@ elif mode == "Multiple Data":
                     mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
                 )
 
-                st.info("Processing complete. Check debug information above.")
+                st.info("Processing complete!")
                 st.session_state["df_processed"] = df
 
         except Exception as e:
