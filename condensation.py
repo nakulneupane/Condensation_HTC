@@ -137,6 +137,7 @@ elif mode == "Single Data Point":
                                  ["T", "P"], key="temp_or_press")
         quality_prop = st.number_input("Enter quality (x) for property calculation (0 for liquid, 1 for vapor):",
                                        min_value=0.0, max_value=1.0, value=0.50, step=0.01, key="quality_prop")
+        x_val = quality_prop
         if temp_or_press == "T":
             T_input = st.number_input("Enter Temperature (K):", value=313.0, format="%.2f", key="T_input_calc")
         else:
