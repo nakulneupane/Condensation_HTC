@@ -10,95 +10,9 @@ import matplotlib.pyplot as plt
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage
 
-# Define the CSS for the light theme
-light = """
-    <style>
-        .stApp {
-            background-color: white;
-            color: black;
-        }
-        .stButton>button {
-            background-color: #90D5FF;
-            color: white;
-        }
-        .stButton>button:hover {
-            background-color: #6a0dad;
-        }
-    </style>
-"""
-
-# Apply the light theme to the app
-st.markdown(light, unsafe_allow_html=True)
-
-# Initialize Langchain/LLM with your API key
-api_key = st.secrets.get("GEMINI_API_KEY")
-llm = None
-
-if api_key:
-    try:
-        model_name = "gemini-2.0-flash"
-        llm = ChatGoogleGenerativeAI(
-            model=model_name, google_api_key=api_key, temperature=0.3
-        )
-    except Exception as e:
-        st.error(f"Error initializing Gemini model '{model_name}': {e}")
 
 # Path to README.md
 readme_path = "README.md"
-
-# Assistant UI
-toggle_assistant = st.checkbox("💬 Assistant", value=False, key="toggle_assistant_checkbox")
-
-if toggle_assistant and llm:
-    with st.expander("Ask me!", expanded=True, key="assistant_expander"):
-        # Check if README.md should be processed first
-        if "readme_processed" not in st.session_state:
-            st.session_state.readme_processed = False
-
-        if not st.session_state.readme_processed:
-            try:
-                with open(readme_path, 'r') as file:
-                    readme_content = file.read()
-                # Send the README content to the LLM for processing
-                prompt = f"Here is the README for the app:\n\n{readme_content}\n\nPlease process it for context. Then, you're ready to answer questions."
-                response = llm.invoke([HumanMessage(content=prompt)])
-                st.session_state.readme_processed = True  # Mark README as processed
-                st.success("README has been processed. You can now ask questions.", key="readme_processed_success")
-            except Exception as e:
-                st.error(f"Failed to load README.md: {e}", key="readme_error")
-
-        else:
-            # Now, the assistant is ready for subsequent questions
-            user_query = st.text_input("Your question:", key="assistant_input_textbox")
-            if user_query:
-                with st.spinner("Thinking...", key="assistant_spinner"):
-                    try:
-                        response = llm.invoke([HumanMessage(content=user_query)])
-                        if response and hasattr(response, "content"):
-                            st.success(response.content, key="assistant_success")
-                        else:
-                            st.warning("No response received from the assistant.", key="assistant_warning")
-                        st.session_state["last_query"] = user_query # Store the last query
-                    except Exception as e:
-                        st.error(f"Assistant query failed: {e}", key="assistant_error")
-
-elif toggle_assistant and not llm:
-    st.warning("Assistant is unavailable due to initialization errors.", key="assistant_unavailable_warning")
-
-# Theme toggle button (moved outside the 'with col_theme:' block for simplicity in this example)
-toggle_theme = st.button("Toggle theme", key="toggle_theme_button")
-if toggle_theme:
-    st.session_state.theme = "dark" if st.session_state.theme == "light" else "light"
-    if st.session_state.theme == "dark":
-        st.markdown(dark, unsafe_allow_html=True)
-    else:
-        st.markdown(light, unsafe_allow_html=True)
-
-
-
-
-
-
 
 # ---------------------------
 # Utility Function: CoolProp Calculation using HEOS
