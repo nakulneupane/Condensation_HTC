@@ -174,6 +174,7 @@ elif mode == "Single Data Point":
             # --- Z parameter ---
             x_i = quality_prop
             Z = (x_i * Cp_v * glide) / h_lv if h_lv != 0 else 0.0
+            R_m = Z / h_v
             
 
             prop_success = True
