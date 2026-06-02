@@ -193,32 +193,67 @@ elif mode == "Single Data Point":
         st.write(f"**Z Factor:** {Z:.6f}")
 
     if st.button("Calculate Heat Transfer Coefficient (h)"):
-        # Use the EXACT feature names that the PCA model expects (with units in parentheses)
-        feature_names = [
-            'G (kg/m2s)', 'x', 'Tsat (K)', 'rho_l', 'rho_v', 'mu_l', 'mu_v', 
-            'k_v', 'k_l', 'surface_tension', 'Cp_v', 'Cp_l', 'Psat (Pa)', 'D (m)', 'Z'
-        ]
+        # Load PCA model first to get the exact feature names
+        pca = load_pca_model()
+        xgb_model = load_xgb_skopt_model()
         
-        # Create array with values in the exact same order
-        feature_values = np.array([[
-            G, x_val, T_input, rho_l, rho_v, mu_l, mu_v, k_v, k_l, 
-            surface_tension, Cp_v, Cp_l, Psat, D, Z
-        ]])
+        # Get the feature names from PCA model (in the exact order)
+        expected_feature_names = pca.feature_names_in_
         
-        # Apply log transform (add epsilon to avoid log(0))
+        st.write("### Debug: Expected Feature Names from PCA")
+        st.write(expected_feature_names.tolist())
+        
+        # Create a dictionary with all possible features (using the names PCA expects)
+        # Map the values to the exact names
+        feature_dict = {}
+        
+        # Map our values to the expected feature names
+        # The expected names have units in parentheses like 'G (kg/m2s)', 'Tsat (K)', etc.
+        for expected_name in expected_feature_names:
+            if expected_name == 'G (kg/m2s)':
+                feature_dict[expected_name] = G
+            elif expected_name == 'x':
+                feature_dict[expected_name] = x_val
+            elif expected_name == 'Tsat (K)':
+                feature_dict[expected_name] = T_input
+            elif expected_name == 'rho_l':
+                feature_dict[expected_name] = rho_l
+            elif expected_name == 'rho_v':
+                feature_dict[expected_name] = rho_v
+            elif expected_name == 'mu_l':
+                feature_dict[expected_name] = mu_l
+            elif expected_name == 'mu_v':
+                feature_dict[expected_name] = mu_v
+            elif expected_name == 'k_v':
+                feature_dict[expected_name] = k_v
+            elif expected_name == 'k_l':
+                feature_dict[expected_name] = k_l
+            elif expected_name == 'surface_tension':
+                feature_dict[expected_name] = surface_tension
+            elif expected_name == 'Cp_v':
+                feature_dict[expected_name] = Cp_v
+            elif expected_name == 'Cp_l':
+                feature_dict[expected_name] = Cp_l
+            elif expected_name == 'Psat (Pa)':
+                feature_dict[expected_name] = Psat
+            elif expected_name == 'D (m)':
+                feature_dict[expected_name] = D
+            elif expected_name == 'Z':
+                feature_dict[expected_name] = Z
+            else:
+                st.error(f"Unexpected feature name: {expected_name}")
+                st.stop()
+        
+        # Create DataFrame with exact feature names in the exact order
+        feature_df = pd.DataFrame([feature_dict])
+        
+        # Apply log transform to all columns
         epsilon = 1e-10
-        log_transformed_data = np.log(feature_values + epsilon)
-        
-        # Create DataFrame with exact column names expected by PCA
-        feature_df = pd.DataFrame(log_transformed_data, columns=feature_names)
+        log_transformed_data = np.log(feature_df + epsilon)
         
         try:
-            # Load models
-            pca = load_pca_model()
-            xgb_model = load_xgb_skopt_model()
-            
             # Apply PCA transformation
-            X_pca = pca.transform(feature_df)
+            X_pca = pca.transform(log_transformed_data)
             
             # Make prediction
             predicted_log_h = xgb_model.predict(X_pca)
@@ -258,18 +293,36 @@ elif mode == "Multiple Data":
 
     if uploaded_file is not None:
         try:
-            # Use exact column names with units as expected by PCA
-            col_names = [
-                'G (kg/m2s)', 'x', 'Tsat (K)', 'rho_l', 'rho_v',
-                'mu_l', 'mu_v', 'k_v', 'k_l', 'surface_tension',
-                'Cp_v', 'Cp_l', 'Z', 'Psat (Pa)', 'D (m)'
-            ]
+            # Load PCA model to get expected feature names
+            pca = load_pca_model()
+            expected_feature_names = pca.feature_names_in_
             
+            st.write("### Debug: Expected Feature Names from PCA")
+            st.write(expected_feature_names.tolist())
+            
+            # Read the file
             if uploaded_file.name.endswith('.csv'):
-                df = pd.read_csv(uploaded_file, header=None, skiprows=1, names=col_names)
+                df_raw = pd.read_csv(uploaded_file, header=None)
             else:
-                df = pd.read_excel(uploaded_file, engine='openpyxl', header=None, skiprows=1, names=col_names)
-
+                df_raw = pd.read_excel(uploaded_file, engine='openpyxl', header=None)
+            
+            # Check if the file has the right number of columns
+            if df_raw.shape[1] != len(expected_feature_names):
+                st.error(f"File has {df_raw.shape[1]} columns but expected {len(expected_feature_names)} columns")
+                st.info(f"Expected columns in order: {expected_feature_names.tolist()}")
+                st.stop()
+            
+            # Assign column names
+            df = df_raw.copy()
+            df.columns = expected_feature_names
+            
+            # Skip first row if it contains headers (check if first row contains strings)
+            if df.iloc[0].dtypes == 'object':
+                df = df.iloc[1:].reset_index(drop=True)
+                # Convert all columns to numeric
+                for col in df.columns:
+                    df[col] = pd.to_numeric(df[col], errors='coerce')
+            
             st.write("### Uploaded Data (first 5 rows):")
             st.dataframe(df.head())
             st.write(f"Data shape: {df.shape}")
@@ -277,20 +330,16 @@ elif mode == "Multiple Data":
             if st.button("Process Multiple Data"):
                 epsilon = 1e-10
                 
-                # Apply log transform to all columns except 'x' and 'Z' (but keep them for now)
+                # Apply log transform to all columns (keeping column names)
                 df_log = df.copy()
                 for col in df_log.columns:
-                    if df_log[col].dtype in ['float64', 'int64']:
-                        df_log[col] = np.log(df_log[col] + epsilon)
-                
-                # Load PCA and XGBoost models
-                pca = load_pca_model()
-                xgb_model = load_xgb_skopt_model()
+                    df_log[col] = np.log(df_log[col] + epsilon)
                 
                 # Transform using PCA
                 X_pca = pca.transform(df_log)
                 
                 # Make predictions
+                xgb_model = load_xgb_skopt_model()
                 predicted_log_h = xgb_model.predict(X_pca)
                 predicted_htc = np.exp(predicted_log_h)
                 
@@ -332,8 +381,10 @@ elif mode == "Multiple Data":
     if "df_processed" in st.session_state:
         st.write("### Generate Graph")
         processed_df = st.session_state["df_processed"]
-        x_var = st.selectbox("Select variable for X-axis", options=processed_df.columns, key="x_axis")
-        y_var = st.selectbox("Select variable for Y-axis", options=processed_df.columns, key="y_axis")
+        # Filter columns for graph selection (exclude non-numeric if any)
+        numeric_cols = processed_df.select_dtypes(include=[np.number]).columns.tolist()
+        x_var = st.selectbox("Select variable for X-axis", options=numeric_cols, key="x_axis")
+        y_var = st.selectbox("Select variable for Y-axis", options=numeric_cols, key="y_axis")
         if st.button("Generate Graph"):
             fig, ax = plt.subplots()
             ax.scatter(processed_df[x_var], processed_df[y_var])
