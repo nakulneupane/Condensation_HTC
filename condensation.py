@@ -193,67 +193,32 @@ elif mode == "Single Data Point":
         st.write(f"**Z Factor:** {Z:.6f}")
 
     if st.button("Calculate Heat Transfer Coefficient (h)"):
-        # Load PCA model first to get the exact feature names
-        pca = load_pca_model()
-        xgb_model = load_xgb_skopt_model()
+        # Define the exact feature names in the correct order from PCA
+        feature_names = [
+            'G (kg/m2s)', 'x', 'Tsat (K)', 'rho_l', 'rho_v', 'mu_l', 'mu_v', 
+            'k_v', 'k_l', 'surface_tension', 'Cp_v', 'Cp_l', 'Z', 'Psat (Pa)', 'D (m)'
+        ]
         
-        # Get the feature names from PCA model (in the exact order)
-        expected_feature_names = pca.feature_names_in_
+        # Create array with values in the exact same order
+        feature_values = np.array([[
+            G, x_val, T_input, rho_l, rho_v, mu_l, mu_v, k_v, k_l, 
+            surface_tension, Cp_v, Cp_l, Z, Psat, D
+        ]])
         
-        st.write("### Debug: Expected Feature Names from PCA")
-        st.write(expected_feature_names.tolist())
-        
-        # Create a dictionary with all possible features (using the names PCA expects)
-        # Map the values to the exact names
-        feature_dict = {}
-        
-        # Map our values to the expected feature names
-        # The expected names have units in parentheses like 'G (kg/m2s)', 'Tsat (K)', etc.
-        for expected_name in expected_feature_names:
-            if expected_name == 'G (kg/m2s)':
-                feature_dict[expected_name] = G
-            elif expected_name == 'x':
-                feature_dict[expected_name] = x_val
-            elif expected_name == 'Tsat (K)':
-                feature_dict[expected_name] = T_input
-            elif expected_name == 'rho_l':
-                feature_dict[expected_name] = rho_l
-            elif expected_name == 'rho_v':
-                feature_dict[expected_name] = rho_v
-            elif expected_name == 'mu_l':
-                feature_dict[expected_name] = mu_l
-            elif expected_name == 'mu_v':
-                feature_dict[expected_name] = mu_v
-            elif expected_name == 'k_v':
-                feature_dict[expected_name] = k_v
-            elif expected_name == 'k_l':
-                feature_dict[expected_name] = k_l
-            elif expected_name == 'surface_tension':
-                feature_dict[expected_name] = surface_tension
-            elif expected_name == 'Cp_v':
-                feature_dict[expected_name] = Cp_v
-            elif expected_name == 'Cp_l':
-                feature_dict[expected_name] = Cp_l
-            elif expected_name == 'Psat (Pa)':
-                feature_dict[expected_name] = Psat
-            elif expected_name == 'D (m)':
-                feature_dict[expected_name] = D
-            elif expected_name == 'Z':
-                feature_dict[expected_name] = Z
-            else:
-                st.error(f"Unexpected feature name: {expected_name}")
-                st.stop()
-        
-        # Create DataFrame with exact feature names in the exact order
-        feature_df = pd.DataFrame([feature_dict])
-        
-        # Apply log transform to all columns
+        # Apply log transform (add epsilon to avoid log(0))
         epsilon = 1e-10
-        log_transformed_data = np.log(feature_df + epsilon)
+        log_transformed_data = np.log(feature_values + epsilon)
+        
+        # Create DataFrame with exact column names in exact order
+        feature_df = pd.DataFrame(log_transformed_data, columns=feature_names)
         
         try:
+            # Load models
+            pca = load_pca_model()
+            xgb_model = load_xgb_skopt_model()
+            
             # Apply PCA transformation
-            X_pca = pca.transform(log_transformed_data)
+            X_pca = pca.transform(feature_df)
             
             # Make prediction
             predicted_log_h = xgb_model.predict(X_pca)
@@ -264,7 +229,7 @@ elif mode == "Single Data Point":
                 'G (kg/m2s)': G, 'x': x_val, 'Tsat (K)': T_input, 'rho_l': rho_l, 
                 'rho_v': rho_v, 'mu_l': mu_l, 'mu_v': mu_v, 'k_v': k_v, 'k_l': k_l,
                 'surface_tension (N/m)': surface_tension, 'Cp_v (J/kgK)': Cp_v, 'Cp_l (J/kgK)': Cp_l, 
-                'Psat (Pa)': Psat, 'D (m)': D, 'Z': Z
+                'Z': Z, 'Psat (Pa)': Psat, 'D (m)': D
             }])
             
             st.write("### Fluid Properties Used")
@@ -293,35 +258,25 @@ elif mode == "Multiple Data":
 
     if uploaded_file is not None:
         try:
-            # Load PCA model to get expected feature names
-            pca = load_pca_model()
-            expected_feature_names = pca.feature_names_in_
-            
-            st.write("### Debug: Expected Feature Names from PCA")
-            st.write(expected_feature_names.tolist())
+            # Define the exact feature names in the correct order
+            feature_names = [
+                'G (kg/m2s)', 'x', 'Tsat (K)', 'rho_l', 'rho_v', 'mu_l', 'mu_v', 
+                'k_v', 'k_l', 'surface_tension', 'Cp_v', 'Cp_l', 'Z', 'Psat (Pa)', 'D (m)'
+            ]
             
             # Read the file
             if uploaded_file.name.endswith('.csv'):
-                df_raw = pd.read_csv(uploaded_file, header=None)
+                df = pd.read_csv(uploaded_file, header=0)
             else:
-                df_raw = pd.read_excel(uploaded_file, engine='openpyxl', header=None)
+                df = pd.read_excel(uploaded_file, engine='openpyxl', header=0)
             
-            # Check if the file has the right number of columns
-            if df_raw.shape[1] != len(expected_feature_names):
-                st.error(f"File has {df_raw.shape[1]} columns but expected {len(expected_feature_names)} columns")
-                st.info(f"Expected columns in order: {expected_feature_names.tolist()}")
-                st.stop()
-            
-            # Assign column names
-            df = df_raw.copy()
-            df.columns = expected_feature_names
-            
-            # Skip first row if it contains headers (check if first row contains strings)
-            if df.iloc[0].dtypes == 'object':
-                df = df.iloc[1:].reset_index(drop=True)
-                # Convert all columns to numeric
-                for col in df.columns:
-                    df[col] = pd.to_numeric(df[col], errors='coerce')
+            # Check if the file has the expected columns
+            if list(df.columns) != feature_names:
+                st.warning(f"Column names in file: {list(df.columns)}")
+                st.warning(f"Expected column names: {feature_names}")
+                st.info("Attempting to use columns in order...")
+                # If columns don't match, assume they are in the right order but with different names
+                df.columns = feature_names
             
             st.write("### Uploaded Data (first 5 rows):")
             st.dataframe(df.head())
@@ -334,6 +289,9 @@ elif mode == "Multiple Data":
                 df_log = df.copy()
                 for col in df_log.columns:
                     df_log[col] = np.log(df_log[col] + epsilon)
+                
+                # Load PCA model
+                pca = load_pca_model()
                 
                 # Transform using PCA
                 X_pca = pca.transform(df_log)
