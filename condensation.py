@@ -192,22 +192,42 @@ elif mode == "Single Data Point":
             prop_success = False
 
     # --- Manual input fallback ---
-    if prop_method == "Input manually" or not prop_success:
-        st.info("Please manually input the fluid properties:")
-        T_input = st.number_input("Enter Saturation Temperature (Tsat) [K]:", value=313.0, format="%.2f", key="T_input_manual")
-        rho_l = st.number_input("Liquid Density (rho_l) [kg/m³]:", value=1000.0, format="%.2f", key="rho_l_manual")
-        rho_v = st.number_input("Vapor Density (rho_v) [kg/m³]:", value=10.0, format="%.2f", key="rho_v_manual")
-        mu_l = st.number_input("Liquid Viscosity (mu_l) [Pa.s]:", value=0.001, format="%.4f", key="mu_l_manual")
-        mu_v = st.number_input("Vapor Viscosity (mu_v) [Pa.s]:", value=0.00001, format="%.6f", key="mu_v_manual")
-        k_l = st.number_input("Liquid Thermal Conductivity (k_l) [W/mK]:", value=0.6, format="%.2f", key="k_l_manual")
-        k_v = st.number_input("Vapor Thermal Conductivity (k_v) [W/mK]:", value=0.02, format="%.2f", key="k_v_manual")
-        surface_tension = st.number_input("Surface Tension (N/m):", value=0.072, format="%.3f", key="surf_manual")
-        Cp_l = st.number_input("Liquid Specific Heat (Cp_l) [J/kgK]:", value=4180.0, format="%.2f", key="Cp_l_manual")
-        Cp_v = st.number_input("Vapor Specific Heat (Cp_v) [J/kgK]:", value=2000.0, format="%.2f", key="Cp_v_manual")
-        Psat = st.number_input("Saturation Pressure (Psat) [Pa]:", value=101325.0, format="%.2f", key="Psat_manual")
-        D = st.number_input("Enter diameter (m):", value=0.0050, format="%.4f", key="D_manual")
-        G = st.number_input("Enter mass flux (G) in kg/m²s:", value=200.00, format="%.2f", key="G_manual")
-        x_val = st.number_input("Enter quality (x) (0 for liquid, 1 for vapor):", min_value=0.0, max_value=1.0, value=0.5, step=0.01, key="x_manual")
+          # --- Manual input fallback ---
+        if prop_method == "Input manually" or not prop_success:
+        
+            st.info("Please manually input the fluid properties:")
+        
+            T_input = st.number_input("Enter Saturation Temperature (Tsat) [K]:", value=313.0, format="%.2f", key="T_input_manual")
+            rho_l = st.number_input("Liquid Density (rho_l) [kg/m³]:", value=1000.0, format="%.2f", key="rho_l_manual")
+            rho_v = st.number_input("Vapor Density (rho_v) [kg/m³]:", value=10.0, format="%.2f", key="rho_v_manual")
+            mu_l = st.number_input("Liquid Viscosity (mu_l) [Pa.s]:", value=0.001, format="%.4f", key="mu_l_manual")
+            mu_v = st.number_input("Vapor Viscosity (mu_v) [Pa.s]:", value=0.00001, format="%.6f", key="mu_v_manual")
+            k_l = st.number_input("Liquid Thermal Conductivity (k_l) [W/mK]:", value=0.6, format="%.2f", key="k_l_manual")
+            k_v = st.number_input("Vapor Thermal Conductivity (k_v) [W/mK]:", value=0.02, format="%.2f", key="k_v_manual")
+            surface_tension = st.number_input("Surface Tension (N/m):", value=0.072, format="%.3f", key="surf_manual")
+            Cp_l = st.number_input("Liquid Specific Heat (Cp_l) [J/kgK]:", value=4180.0, format="%.2f", key="Cp_l_manual")
+            Cp_v = st.number_input("Vapor Specific Heat (Cp_v) [J/kgK]:", value=2000.0, format="%.2f", key="Cp_v_manual")
+            Psat = st.number_input("Saturation Pressure (Psat) [Pa]:", value=101325.0, format="%.2f", key="Psat_manual")
+            D = st.number_input("Enter diameter (m):", value=0.0050, format="%.4f", key="D_manual")
+            G = st.number_input("Enter mass flux (G) in kg/m²s:", value=200.00, format="%.2f", key="G_manual")
+            x_val = st.number_input("Enter quality (x)", min_value=0.0, max_value=1.0, value=0.5, step=0.01, key="x_manual")
+        
+            st.markdown("### Additional inputs for Z-factor calculation")
+        
+            T_bubble = st.number_input("Bubble Temperature (K)", value=313.0, format="%.2f", key="T_bubble_manual")
+            T_dew = st.number_input("Dew Temperature (K)", value=313.0, format="%.2f", key="T_dew_manual")
+            h_l = st.number_input("Liquid Enthalpy h_l (J/kg)", value=200000.0, format="%.2f", key="hl_manual")
+            h_v = st.number_input("Vapor Enthalpy h_v (J/kg)", value=400000.0, format="%.2f", key="hv_manual")
+        
+            glide = T_dew - T_bubble
+            h_lv = h_v - h_l
+        
+            Z = (x_val * Cp_v * glide) / h_lv if h_lv != 0 else 0.0
+        
+            st.success("Z-factor calculated successfully")
+            st.write(f"**Temperature Glide:** {glide:.4f} K")
+            st.write(f"**Latent Heat (h_lv):** {h_lv:.2f} J/kg")
+            st.write(f"**Z Factor:** {Z:.6f}")
 
 
     if st.button("Calculate Heat Transfer Coefficient (h)"):
