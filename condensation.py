@@ -22,7 +22,7 @@ def cool(ref1, ref2, mf1, mf2, out, in1, valin1, in2, valin2):
 st.title("Condensation Heat Transfer Coefficient Predictor")
 st.subheader("Model: **XGBoost with Scikit-Optimize & PCA**")
 
-google_drive_image_id = "1_OX3mrCqzd5o8YPR4x0njE75Xx0IVweF"
+google_drive_image_id = "1yiWx82cYa46vcI9oB4_IJ5mLtv7x9zSo"
 google_drive_url = f"https://drive.google.com/uc?export=view&id={google_drive_image_id}"
 
 try:
