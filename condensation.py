@@ -22,7 +22,7 @@ def cool(ref1, ref2, mf1, mf2, out, in1, valin1, in2, valin2):
 st.title("Condensation Heat Transfer Coefficient Predictor")
 st.subheader("Model: **XGBoost with Scikit-Optimize & PCA**")
 
-google_drive_url = "https://drive.google.com/uc?export=download&id=1itd1HnJBWUEXGUq0B8sFJhmXjWEjtQ1t"
+google_drive_url = "https://drive.google.com/uc?export=download&id=1_OX3mrCqzd5o8YPR4x0njE75Xx0IVweF"
 try:
     response = requests.get(google_drive_url)
     image = Image.open(BytesIO(response.content))
