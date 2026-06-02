@@ -8,9 +8,6 @@ import requests
 from PIL import Image
 import matplotlib.pyplot as plt
 
-# ---------------------------
-# Utility Function: CoolProp Calculation using HEOS
-# ---------------------------
 @st.cache_data
 def cool(ref1, ref2, mf1, mf2, out, in1, valin1, in2, valin2):
     """Calculate thermodynamic properties using CoolProp's HEOS backend."""
@@ -22,9 +19,6 @@ def cool(ref1, ref2, mf1, mf2, out, in1, valin1, in2, valin2):
         fluid = f'HEOS::{ref1}&{ref2}'
     return CP.PropsSI(out, in1, valin1, in2, valin2, fluid)
 
-# ---------------------------
-# App Title and Overview Image
-# ---------------------------
 st.title("Condensation Heat Transfer Coefficient Predictor")
 st.subheader("Model: **XGBoost with Scikit-Optimize & PCA**")
 
@@ -55,9 +49,6 @@ with st.expander("🔍 Show Model Validity Information"):
         'R1234YF/R32 (48.0/52.0%)', 'R-E170/R744 (79.0/21.0%)', 'R236EA'
     """)
 
-# ---------------------------
-# Model Loading Functions (Only PCA + XGBoost with skopt)
-# ---------------------------
 @st.cache_resource
 def load_xgb_skopt_model():
     """Load the XGBoost model tuned with scikit-optimize (works on PCA-transformed features)."""
@@ -74,9 +65,7 @@ def load_pca_model():
     response.raise_for_status()
     return joblib.load(BytesIO(response.content))
 
-# ---------------------------
-# Creative Mode Selection
-# ---------------------------
+# Mode Selection
 if 'mode' not in st.session_state:
     st.session_state.mode = None
 
@@ -94,20 +83,18 @@ mode = st.session_state.mode
 if mode is None:
     st.info("Please select a mode above to continue.")
 
-# ---------------------------
 # Single Data Point Mode
-# ---------------------------
 elif mode == "Single Data Point":
     st.header("Single Data Point Prediction")
     
-    # Section 1: Basic Fluid Details
+    # Fluid Details
     st.subheader("1. Input Fluid Details")
     fluid1 = st.text_input("Enter primary fluid name (e.g., R1234ZE(E), R134a, etc.):", "R134a", key="fluid1")
     fluid2 = st.text_input("Enter secondary fluid name (or leave blank if none):", "", key="fluid2")
     mf1 = st.number_input("Enter mass fraction of fluid 1 (0 to 1):", min_value=0.0, max_value=1.0, value=1.0, step=0.01, key="mf1")
     mf2 = 1.0 - mf1 if fluid2 else 0.0
 
-    # Section 2: Choose Method for Fluid Property Input
+    # Fluid Property Input
     st.subheader("2. Select Method for Fluid Properties")
     prop_method = st.radio("Choose how to provide fluid properties:",
                            ["Calculate using CoolProp", "Input manually"], key="prop_method")
@@ -129,7 +116,7 @@ elif mode == "Single Data Point":
         G = st.number_input("Enter mass flux (G) in kg/m²s:", value=200.00, format="%.2f", key="G_calc")
         
         try:
-            # --- Calculate all properties and glide ---
+            # Calculating all properties
             if temp_or_press == "T":
                 Psat = cool(fluid1, fluid2, mf1, mf2, 'P', 'T', T_input, 'Q', 0)
             else:
@@ -139,7 +126,6 @@ elif mode == "Single Data Point":
             T_dew = cool(fluid1, fluid2, mf1, mf2, 'T', 'P', Psat, 'Q', 1)
             glide = T_dew - T_bubble
             T_ref = 0.5 * (T_bubble + T_dew)
-
             rho_l = cool(fluid1, fluid2, mf1, mf2, 'D', 'T', T_ref, 'Q', 0)
             rho_v = cool(fluid1, fluid2, mf1, mf2, 'D', 'T', T_ref, 'Q', 1)
             mu_l = cool(fluid1, fluid2, mf1, mf2, 'V', 'T', T_ref, 'Q', 0)
@@ -149,20 +135,16 @@ elif mode == "Single Data Point":
             surface_tension = cool(fluid1, fluid2, mf1, mf2, 'I', 'T', T_ref, 'Q', quality_prop)
             Cp_l = cool(fluid1, fluid2, mf1, mf2, 'C', 'T', T_ref, 'Q', 0)
             Cp_v = cool(fluid1, fluid2, mf1, mf2, 'C', 'T', T_ref, 'Q', 1)
-
             h_l = cool(fluid1, fluid2, mf1, mf2, 'H', 'T', T_ref, 'Q', 0)
             h_v = cool(fluid1, fluid2, mf1, mf2, 'H', 'T', T_ref, 'Q', 1)
             h_lv = h_v - h_l
-
-            # --- Z parameter ---
             x_i = quality_prop
             Z = (x_i * Cp_v * glide) / h_lv if h_lv != 0 else 0.0
             R_m = Z / h_v
 
             prop_success = True
 
-            # --- Display key computed values ---
-            st.success("✅ Thermodynamic properties successfully calculated using CoolProp.")
+            st.success("Thermodynamic properties successfully calculated using CoolProp.")
             st.write(f"**Glide temperature:** {glide:.4f} K")
             st.write(f"**Latent heat (h_lv):** {h_lv:.2f} J/kg")
             st.write(f"**Z factor:** {Z:.6f}")
@@ -172,7 +154,7 @@ elif mode == "Single Data Point":
             st.error(f"CoolProp failed to calculate properties: {e}")
             prop_success = False
 
-    # --- Manual input fallback ---
+    # Manual input
     if prop_method == "Input manually" or not prop_success:
         st.info("Please manually input the fluid properties:")
         
@@ -209,15 +191,11 @@ elif mode == "Single Data Point":
         st.write(f"**Z Factor:** {Z:.6f}")
 
     if st.button("Calculate Heat Transfer Coefficient (h)"):
-        # Assemble feature array in the exact order expected by the PCA model
-        # Convert to numpy array and reshape for PCA
         feature_array = np.array([[
             G, x_val, T_input, rho_l, rho_v, mu_l, mu_v, k_v, k_l, 
             surface_tension, Cp_v, Cp_l, Psat, D, Z
         ]])
-        
-        # Create DataFrame with proper column names if needed, or just use numpy array
-        # PCA might expect a specific format, so let's try both approaches
+
         
         epsilon = 1e-10
         log_transformed_data = np.log(feature_array + epsilon)
@@ -226,12 +204,11 @@ elif mode == "Single Data Point":
             pca = load_pca_model()
             xgb_model = load_xgb_skopt_model()
             
-            # Try with numpy array first (most compatible)
             X_pca = pca.transform(log_transformed_data)
             predicted_log_h = xgb_model.predict(X_pca)
             predicted_h = np.exp(predicted_log_h)
             
-            # Display input data for user reference
+            # Display input data
             input_df = pd.DataFrame([{
                 'G (kg/m2s)': G, 'x': x_val, 'Tsat (K)': T_input, 'rho_l': rho_l, 
                 'rho_v': rho_v, 'mu_l': mu_l, 'mu_v': mu_v, 'k_v': k_v, 'k_l': k_l,
@@ -248,7 +225,6 @@ elif mode == "Single Data Point":
             st.error(f"Error during prediction: {str(e)}")
             st.info("Trying alternative data format...")
             
-            # Alternative approach: Try with DataFrame
             try:
                 feature_df = pd.DataFrame(feature_array, columns=[
                     'G', 'x', 'Tsat', 'rho_l', 'rho_v', 'mu_l', 'mu_v', 'k_v', 'k_l',
@@ -264,9 +240,7 @@ elif mode == "Single Data Point":
             except Exception as e2:
                 st.error(f"Both prediction attempts failed. Error: {str(e2)}")
 
-# ---------------------------
 # Multiple Data Mode
-# ---------------------------
 elif mode == "Multiple Data":
     st.header("Multiple Data Processing")
     st.info("""
@@ -296,10 +270,10 @@ elif mode == "Multiple Data":
 
             if st.button("Process Multiple Data"):
                 epsilon = 1e-10
-                # Get the feature columns (all columns)
+                # Get feature columns 
                 feature_cols = df.columns.tolist()
                 
-                # Convert to numpy array and apply log transform
+                # apply log transform
                 feature_array = df[feature_cols].values
                 log_transformed_data = np.log(feature_array + epsilon)
 
@@ -307,7 +281,7 @@ elif mode == "Multiple Data":
                 pca = load_pca_model()
                 xgb_model = load_xgb_skopt_model()
                 
-                # Transform using PCA (use numpy array directly)
+                # Transform using PCA
                 X_pca = pca.transform(log_transformed_data)
                 predicted_log_h = xgb_model.predict(X_pca)
                 predicted_htc = np.exp(predicted_log_h)
@@ -329,13 +303,13 @@ elif mode == "Multiple Data":
                     mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
                 )
 
-                st.info("✅ Processing complete. Check above for model metrics and download results.")
+                st.info("Processing complete. Check above for model metrics and download results.")
                 st.session_state["df_processed"] = df
 
         except Exception as e:
             st.error(f"Error processing file: {e}")
 
-    # Graph Generation Section (accessible if processed DataFrame exists)
+    # Graph Generation 
     if "df_processed" in st.session_state:
         st.write("### Generate Graph")
         processed_df = st.session_state["df_processed"]
@@ -348,8 +322,6 @@ elif mode == "Multiple Data":
             ax.set_ylabel(y_var)
             ax.set_title(f"{y_var} vs {x_var}")
             st.pyplot(fig)
-            
-            # Save the graph as PNG and provide a download button
             buf = BytesIO()
             fig.savefig(buf, format="png", bbox_inches='tight', dpi=800)
             buf.seek(0)
